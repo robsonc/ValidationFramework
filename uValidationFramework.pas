@@ -19,7 +19,7 @@ type
   end;
 
   TValidationAttribute = class abstract(TCustomAttribute)
-  private
+  protected
     FValid: Boolean;
     FErrorMessage: String;
   public
@@ -84,6 +84,9 @@ type
     FMin: Integer;
     FMax: Integer;
   public
+    constructor Create; overload;
+    constructor Create(min: Integer); overload;
+    constructor Create(min: Integer; errorMessage: String); overload;
     constructor Create(min: Integer; max: Integer); overload;
     constructor Create(min: Integer; max: Integer; errorMessage: String); overload;
     property Min: Integer read FMin write FMin;
@@ -91,11 +94,23 @@ type
     function execute(field: TRttiField; obj: TObject): Boolean; override;
   end;
 
+  Future = class(TValidationAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(errorMessage: String); overload;
+    function execute(field: TRttiField; obj: TObject): Boolean; override;
+  end;
+
+  Past = class(TValidationAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(errorMessage: String); overload;
+    function execute(field: TRttiField; obj: TObject): Boolean; override;
+  end;
+
   //notnull
   //null
   //digits
-  //past
-  //future
 
   TValidator = class
   private
@@ -131,6 +146,7 @@ var
   errorMessage: TErrorMessage;
 begin
   Result := true;
+  FErrorMessages.Clear;
 
   rType := context.GetType(TCliente.ClassInfo);
   for rField in rType.GetFields do
@@ -160,7 +176,6 @@ end;
 
 constructor Required.Create;
 begin
-  FValid := true;
   FErrorMessage := 'Campo requerido.';
 end;
 
@@ -174,6 +189,7 @@ function Required.execute(field: TRttiField; obj: TObject): Boolean;
 var
   rFieldType: TRttiType;
 begin
+  FValid := true;
   rFieldType := field.FieldType;
   case rFieldType.TypeKind of
 //    tkUnknown: ;
@@ -210,7 +226,6 @@ end;
 
 constructor Min.Create(value: Integer);
 begin
-  FValid := true;
   FErrorMessage := 'Valor mínimo inválido.';
   FValue := value;
 end;
@@ -225,6 +240,7 @@ function Min.execute(field: TRttiField; obj: TObject): Boolean;
 var
   rFieldType: TRttiType;
 begin
+  FValid := true;
   rFieldType := field.FieldType;
   if rFieldType.TypeKind = tkInteger then
   begin
@@ -237,9 +253,8 @@ end;
 
 constructor Max.Create(value: Integer);
 begin
-  FValid := true;
-  FErrorMessage := 'Valor máximo inválido.';
   FValue := value;
+  FErrorMessage := 'Valor máximo inválido.';
 end;
 
 constructor Max.Create(value: Integer; errorMessage: String);
@@ -252,6 +267,7 @@ function Max.execute(field: TRttiField; obj: TObject): Boolean;
 var
   rFieldType: TRttiType;
 begin
+  FValid := true;
   rFieldType := field.FieldType;
   if rFieldType.TypeKind = tkInteger then
   begin
@@ -266,7 +282,6 @@ constructor Pattern.Create(regex: String);
 begin
   FErrorMessage := 'Valor inválido.';
   FValue := regex;
-  FValid := true;
 end;
 
 constructor Pattern.Create(regex, errorMessage: String);
@@ -280,6 +295,7 @@ var
   rFieldType: TRttiType;
   regex: TRegEx;
 begin
+  FValid := true;
   rFieldType := field.FieldType;
   if rFieldType.TypeKind in [tkString, tkWString, tkUString] then
   begin
@@ -293,7 +309,6 @@ end;
 
 constructor AssertTrue.Create;
 begin
-  FValid := true;
   FErrorMessage := 'Valor inválido. O valor precisa ser verdadeiro.';
 end;
 
@@ -305,6 +320,7 @@ end;
 
 function AssertTrue.execute(field: TRttiField; obj: TObject): Boolean;
 begin
+  FValid := true;
   if not field.GetValue(obj).AsBoolean then
     FValid := false;
 end;
@@ -313,7 +329,6 @@ end;
 
 constructor AssertFalse.Create;
 begin
-  FValid := true;
   FErrorMessage := 'Valor inválido. O valor precisa ser falso.';
 end;
 
@@ -325,6 +340,7 @@ end;
 
 function AssertFalse.execute(field: TRttiField; obj: TObject): Boolean;
 begin
+  FValid := true;
   if field.GetValue(obj).AsBoolean then
     FValid := false;
 end;
@@ -343,11 +359,27 @@ end;
 
 { Size }
 
+constructor Size.Create;
+begin
+
+end;
+
+constructor Size.Create(min: Integer);
+begin
+  Self.Create;
+  FMin := min;
+end;
+
+constructor Size.Create(min: Integer; errorMessage: String);
+begin
+  Self.Create(min);
+  FErrorMessage := errorMessage;
+end;
+
 constructor Size.Create(min: Integer; max: Integer);
 begin
-  FMin := min;
+  Self.Create(min);
   FMax := max;
-  FValid := true;
 end;
 
 constructor Size.Create(min: Integer; max: Integer; errorMessage: String);
@@ -361,10 +393,18 @@ var
   rFieldType: TRttiType;
   fieldLength: Integer;
 begin
+  FValid := true;
   rFieldType := field.FieldType;
   if rFieldType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     fieldLength := Length(field.GetValue(obj).AsString);
+
+    if FMax = 0 then
+    begin
+      FValid := fieldLength >= FMin;
+      Exit;
+    end;
+
     if (fieldLength > FMax) or (fieldLength < FMin) then
       FValid := false;
   end;
@@ -385,6 +425,52 @@ end;
 procedure TErrorMessage.SetMessages(const Value: TList<String>);
 begin
   FMessages := Value;
+end;
+
+{ Future }
+
+constructor Future.Create;
+begin
+
+end;
+
+constructor Future.Create(errorMessage: String);
+begin
+  Self.Create;
+  FErrorMessage := errorMessage;
+end;
+
+function Future.execute(field: TRttiField; obj: TObject): Boolean;
+begin
+  FValid := true;
+  if (field.FieldType.Name = 'TDate') or (field.FieldType.Name = 'TDateTime') then
+  begin
+    if field.GetValue(obj).AsType<TDate> <= Date then
+      FValid := false;
+  end;
+end;
+
+{ Past }
+
+constructor Past.Create;
+begin
+
+end;
+
+constructor Past.Create(errorMessage: String);
+begin
+  Self.Create;
+  FErrorMessage := errorMessage;
+end;
+
+function Past.execute(field: TRttiField; obj: TObject): Boolean;
+begin
+  FValid := true;
+  if (field.FieldType.Name = 'TDate') or (field.FieldType.Name = 'TDateTime') then
+  begin
+    if field.GetValue(obj).AsType<TDate> >= Date then
+      FValid := false;
+  end;
 end;
 
 end.

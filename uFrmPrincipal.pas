@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, uModel,
   uValidationFramework, Vcl.Bind.GenData, System.Rtti, System.Bindings.Outputs,
   Vcl.Bind.Editors, Data.Bind.EngExt, Vcl.Bind.DBEngExt, Data.Bind.Components,
-  Data.Bind.ObjectScope;
+  Data.Bind.ObjectScope, RegularExpressions, System.TypInfo;
 
 type
   TForm1 = class(TForm)
@@ -53,9 +53,11 @@ begin
 
   cliente := TCliente.Create;
   cliente.Nome := editNome.Text;
-  cliente.idade := 12;
+  cliente.idade := 18;
   cliente.Filhos := 3;
   cliente.isCasado := true;
+  cliente.dataAtual := Date;
+  cliente.Email := 'robson_coutinho@yahoo.com.br';
 
   if not validator.validate(cliente) then
   begin
@@ -66,6 +68,7 @@ begin
         lbErrorMessage.Caption := msg.Messages[0];
         lbErrorMessage.Visible := true;
       end;
+      ShowMessage(msg.Messages[0]);
     end;
   end;
 end;
