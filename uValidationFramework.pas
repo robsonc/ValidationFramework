@@ -14,6 +14,7 @@ type
     procedure SetMessages(const Value: TList<String>);
   public
     constructor Create;
+    destructor Destroy; override;
     property FieldName: String read FFieldName write SetFieldName;
     property Messages: TList<String> read FMessages write SetMessages;
   end;
@@ -117,6 +118,7 @@ type
     FErrorMessages: TList<TErrorMessage>;
   public
     constructor Create;
+    destructor Destroy; override;
     function validate(obj: TObject): Boolean;
     function getErrorMessages(): TList<TErrorMessage>;
   end;
@@ -129,7 +131,13 @@ uses uModel;
 
 constructor TValidator.Create;
 begin
-  FErrorMessages := TList<TErrorMessage>.Create;
+  FErrorMessages := TObjectList<TErrorMessage>.Create;
+end;
+
+destructor TValidator.Destroy;
+begin
+  FErrorMessages.Free;
+  inherited;
 end;
 
 function TValidator.getErrorMessages: TList<TErrorMessage>;
@@ -172,7 +180,6 @@ begin
 
   if FErrorMessages.Count > 0 then
     Result := false;
-    
 end;
 
 { Required }
@@ -418,6 +425,12 @@ end;
 constructor TErrorMessage.Create;
 begin
   FMessages := TList<String>.Create;
+end;
+
+destructor TErrorMessage.Destroy;
+begin
+  FMessages.Free;
+  inherited;
 end;
 
 procedure TErrorMessage.SetFieldName(const Value: String);

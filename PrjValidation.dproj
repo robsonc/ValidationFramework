@@ -86,7 +86,6 @@
         </DelphiCompile>
         <DCCReference Include="uFrmPrincipal.pas">
             <Form>Form1</Form>
-            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="uModel.pas"/>
         <DCCReference Include="uValidationFramework.pas"/>

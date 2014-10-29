@@ -1,6 +1,9 @@
 program PrjValidation;
 
 uses
+  {$IFDEF DEBUG}
+  FastMM4,
+  {$ENDIF}
   Vcl.Forms,
   uFrmPrincipal in 'uFrmPrincipal.pas' {Form1},
   uModel in 'uModel.pas',

@@ -62,25 +62,32 @@ begin
   lbEmailError.Visible := false;
 
   validator := TValidator.Create;
+  try
+    cliente := TCliente.Create;
+    try
+      cliente.Nome := editNome.Text;
+      cliente.idade := StrToInt(editIdade.Text);
+      cliente.Filhos := StrToInt(editFilhos.Text);
+      cliente.isCasado := ckCasado.Checked;
+      cliente.dataAtual := Date;
+      cliente.Email := editEmail.Text;
 
-  cliente := TCliente.Create;
-  cliente.Nome := editNome.Text;
-  cliente.idade := StrToInt(editIdade.Text);
-  cliente.Filhos := StrToInt(editFilhos.Text);
-  cliente.isCasado := ckCasado.Checked;
-  cliente.dataAtual := Date;
-  cliente.Email := editEmail.Text;
-
-  if not validator.validate(cliente) then
-  begin
-    for msg in validator.getErrorMessages do
-    begin
-      showErrorMessage('FNome', msg, lbErrorMessage);
-      showErrorMessage('Fidade', msg, lbIdadeError);
-      showErrorMessage('FFilhos', msg, lbFilhosError);
-      showErrorMessage('FisCasado', msg, lbCasadoError);
-      showErrorMessage('FEmail', msg, lbEmailError);
+      if not validator.validate(cliente) then
+      begin
+        for msg in validator.getErrorMessages do
+        begin
+          showErrorMessage('FNome', msg, lbErrorMessage);
+          showErrorMessage('Fidade', msg, lbIdadeError);
+          showErrorMessage('FFilhos', msg, lbFilhosError);
+          showErrorMessage('FisCasado', msg, lbCasadoError);
+          showErrorMessage('FEmail', msg, lbEmailError);
+        end;
+      end;
+    finally
+      cliente.Free;
     end;
+  finally
+    validator.Free;
   end;
 end;
 
