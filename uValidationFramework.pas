@@ -109,8 +109,20 @@ type
     function execute(field: TRttiField; obj: TObject): Boolean; override;
   end;
 
-  //notnull
-  //null
+  NotNull = class(TValidationAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(errorMessage: String); overload;
+    function execute(field: TRttiField; obj: TObject): Boolean; override;
+  end;
+
+  Null = class(TValidationAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(errorMessage: String); overload;
+    function execute(field: TRttiField; obj: TObject): Boolean; override;
+  end;
+
   //digits
 
   TValidator = class
@@ -175,7 +187,9 @@ begin
     end;
 
     if errorMessage.Messages.Count > 0 then
-      FErrorMessages.Add(errorMessage);
+      FErrorMessages.Add(errorMessage)
+    else
+      errorMessage.Free;
   end;
 
   if FErrorMessages.Count > 0 then
@@ -486,6 +500,57 @@ begin
   begin
     if field.GetValue(obj).AsType<TDate> >= Date then
       FValid := false;
+  end;
+end;
+
+{ NotNull }
+
+constructor NotNull.Create;
+begin
+
+end;
+
+constructor NotNull.Create(errorMessage: String);
+begin
+  FErrorMessage := errorMessage;
+end;
+
+function NotNull.execute(field: TRttiField; obj: TObject): Boolean;
+begin
+  FValid := true;
+
+  if field.FieldType.TypeKind = tkClass then
+  begin
+    if field.GetValue(obj).AsObject = nil then
+    begin
+      FValid := false;
+    end;
+  end;
+
+end;
+
+{ Null }
+
+constructor Null.Create;
+begin
+
+end;
+
+constructor Null.Create(errorMessage: String);
+begin
+  FErrorMessage := errorMessage;
+end;
+
+function Null.execute(field: TRttiField; obj: TObject): Boolean;
+begin
+  FValid := true;
+
+  if field.FieldType.TypeKind = tkClass then
+  begin
+    if not (field.GetValue(obj).AsObject = nil) then
+    begin
+      FValid := false;
+    end;
   end;
 end;
 

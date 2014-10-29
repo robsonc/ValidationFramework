@@ -13,6 +13,17 @@ type
     function execute(field: TRttiField; obj: TObject): Boolean; override;
   end;
 
+  TTelefone = class
+  private
+    FDDD: String;
+    FNumero: String;
+    procedure SetDDD(const Value: String);
+    procedure SetNumero(const Value: String);
+  public
+    property DDD: String read FDDD write SetDDD;
+    property Numero: String read FNumero write SetNumero;
+  end;
+
   TCliente = class
   private
     [Required('Este campo é obrigatório e não pode estar vazio.')]
@@ -30,12 +41,16 @@ type
     FdataAtual: TDate;
     [ValidEmail('E-mail inválido.')]
     FEmail: String;
+    [NotNull('Telefone é obritório.')]
+    FTelefone: TTelefone;
+    //FTeste: Integer;
     procedure SetNome(const Value: String);
     procedure Setidade(const Value: Integer);
     procedure SetFilhos(const Value: Integer);
     procedure SetisCasado(const Value: Boolean);
     procedure SetdataAtual(const Value: TDate);
     procedure SetEmail(const Value: String);
+    procedure SetTelefone(const Value: TTelefone);
   public
     property Nome: String read FNome write SetNome;
     property idade: Integer read Fidade write Setidade;
@@ -43,6 +58,7 @@ type
     property isCasado: Boolean read FisCasado write SetisCasado;
     property dataAtual: TDate read FdataAtual write SetdataAtual;
     property Email: String read FEmail write SetEmail;
+    property Telefone: TTelefone read FTelefone write SetTelefone;
   end;
 
 implementation
@@ -79,6 +95,11 @@ begin
   FNome := Value;
 end;
 
+procedure TCliente.SetTelefone(const Value: TTelefone);
+begin
+  FTelefone := Value;
+end;
+
 { ValidEmail }
 
 constructor ValidEmail.Create;
@@ -103,6 +124,18 @@ begin
     if not regex.IsMatch(field.GetValue(obj).AsString) then
       FValid := false;
   end;
+end;
+
+{ TTelefone }
+
+procedure TTelefone.SetDDD(const Value: String);
+begin
+  FDDD := Value;
+end;
+
+procedure TTelefone.SetNumero(const Value: String);
+begin
+  FNumero := Value;
 end;
 
 end.

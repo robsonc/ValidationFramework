@@ -27,8 +27,7 @@ type
     editEmail: TEdit;
     lbEmailError: TLabel;
     procedure btnSalvarClick(Sender: TObject);
-    procedure bsClienteCreateAdapter(Sender: TObject;
-      var ABindSourceAdapter: TBindSourceAdapter);
+    procedure FormCreate(Sender: TObject);
   private
     procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
     { Private declarations }
@@ -42,12 +41,6 @@ var
 implementation
 
 {$R *.dfm}
-
-procedure TForm1.bsClienteCreateAdapter(Sender: TObject;
-  var ABindSourceAdapter: TBindSourceAdapter);
-begin
-  //
-end;
 
 procedure TForm1.btnSalvarClick(Sender: TObject);
 var
@@ -81,6 +74,8 @@ begin
           showErrorMessage('FFilhos', msg, lbFilhosError);
           showErrorMessage('FisCasado', msg, lbCasadoError);
           showErrorMessage('FEmail', msg, lbEmailError);
+
+          ShowMessage(msg.Messages[0]);
         end;
       end;
     finally
@@ -89,6 +84,12 @@ begin
   finally
     validator.Free;
   end;
+end;
+
+procedure TForm1.FormCreate(Sender: TObject);
+begin
+  editIdade.Text := '0';
+  editFilhos.Text := '0';
 end;
 
 procedure TForm1.showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
