@@ -1,7 +1,7 @@
 object Form1: TForm1
   Left = 0
   Top = 0
-  Caption = 'Form1'
+  Caption = 'Cadastro de Clientes'
   ClientHeight = 316
   ClientWidth = 386
   Color = clBtnFace
@@ -28,10 +28,113 @@ object Form1: TForm1
   end
   object lbErrorMessage: TLabel
     Left = 21
-    Top = 50
-    Width = 69
+    Top = 44
+    Width = 54
     Height = 13
-    Caption = 'Error Message'
+    Caption = 'Nome Error'
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+  end
+  object Label1: TLabel
+    Left = 20
+    Top = 65
+    Width = 33
+    Height = 13
+    Caption = 'Idade'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lbIdadeError: TLabel
+    Left = 21
+    Top = 102
+    Width = 55
+    Height = 13
+    Caption = 'Idade Error'
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+  end
+  object lbFilhos: TLabel
+    Left = 149
+    Top = 65
+    Width = 32
+    Height = 13
+    Caption = 'Filhos'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lbFilhosError: TLabel
+    Left = 149
+    Top = 102
+    Width = 55
+    Height = 13
+    Caption = 'Idade Error'
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+  end
+  object lbCasadoError: TLabel
+    Left = 301
+    Top = 102
+    Width = 63
+    Height = 13
+    Caption = 'Casado Error'
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+  end
+  object lbEmail: TLabel
+    Left = 21
+    Top = 120
+    Width = 35
+    Height = 13
+    Caption = 'E-mail'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lbEmailError: TLabel
+    Left = 22
+    Top = 153
+    Width = 51
+    Height = 13
+    Caption = 'Email Error'
     Color = clBtnFace
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
@@ -43,16 +146,15 @@ object Form1: TForm1
     Visible = False
   end
   object editNome: TEdit
-    Left = 20
-    Top = 27
+    Left = 21
+    Top = 23
     Width = 345
     Height = 21
     TabOrder = 0
-    Text = 'Bitmap28'
   end
   object btnSalvar: TButton
     Left = 290
-    Top = 72
+    Top = 264
     Width = 75
     Height = 25
     Caption = 'Salvar'
@@ -65,44 +167,35 @@ object Form1: TForm1
     TabOrder = 1
     OnClick = btnSalvarClick
   end
-  object bsCliente: TPrototypeBindSource
-    AutoActivate = True
-    AutoPost = False
-    FieldDefs = <
-      item
-        Name = 'Nome'
-        Generator = 'BitmapNames'
-        ReadOnly = False
-      end>
-    ScopeMappings = <>
-    OnCreateAdapter = bsClienteCreateAdapter
-    Left = 296
-    Top = 136
+  object editIdade: TEdit
+    Left = 21
+    Top = 80
+    Width = 121
+    Height = 21
+    NumbersOnly = True
+    TabOrder = 2
   end
-  object BindingsList1: TBindingsList
-    Methods = <>
-    OutputConverters = <>
-    Left = 300
-    Top = 197
-    object LinkControlToField1: TLinkControlToField
-      Category = 'Quick Bindings'
-      DataSource = bsCliente
-      FieldName = 'Nome'
-      Control = editNome
-      Track = True
-    end
+  object editFilhos: TEdit
+    Left = 149
+    Top = 80
+    Width = 137
+    Height = 21
+    NumbersOnly = True
+    TabOrder = 3
   end
-  object bsErrors: TPrototypeBindSource
-    AutoActivate = True
-    AutoPost = False
-    FieldDefs = <
-      item
-        Name = 'ErrorMessage'
-        Generator = 'BitmapNames'
-        ReadOnly = False
-      end>
-    ScopeMappings = <>
-    Left = 216
-    Top = 136
+  object ckCasado: TCheckBox
+    Left = 301
+    Top = 77
+    Width = 65
+    Height = 17
+    Caption = 'Casado(a)'
+    TabOrder = 4
+  end
+  object editEmail: TEdit
+    Left = 21
+    Top = 133
+    Width = 345
+    Height = 21
+    TabOrder = 5
   end
 end

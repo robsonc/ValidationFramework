@@ -151,6 +151,9 @@ begin
   rType := context.GetType(TCliente.ClassInfo);
   for rField in rType.GetFields do
   begin
+    errorMessage := TErrorMessage.Create;
+    errorMessage.FieldName := rField.Name;
+
     for rAttr in rField.GetAttributes do
     begin
       if rAttr is TValidationAttribute then
@@ -158,13 +161,13 @@ begin
         TValidationAttribute(rAttr).execute(rField, obj);
         if not TValidationAttribute(rAttr).isValid() then
         begin
-          errorMessage := TErrorMessage.Create;
-          errorMessage.FieldName := rField.Name;
           errorMessage.Messages.Add(TValidationAttribute(rAttr).getErrorMessage());
-          FErrorMessages.Add(errorMessage);
         end;
       end;
     end;
+
+    if errorMessage.Messages.Count > 0 then
+      FErrorMessages.Add(errorMessage);
   end;
 
   if FErrorMessages.Count > 0 then

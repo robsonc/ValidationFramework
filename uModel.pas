@@ -17,14 +17,14 @@ type
   private
     [Required('Este campo é obrigatório e não pode estar vazio.')]
     [Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
-    [Size(6, 10, 'O nome de usuário deve ter no mínino 6 caracteres.')]
+    [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
     FNome: String;
     [Min(18, 'Idade abaixo da idade mínima exigida de 18 anos.')]
-    [Max(50)]
+    [Max(50, 'Idade acima da idade máxima de 50 anos.')]
     Fidade: Integer;
-    [Max(3)]
+    [Max(3, 'Número de filhos excede o limite de 3 filhos.')]
     FFilhos: Integer;
-    [AssertTrue]
+    [AssertTrue('É obrigatório estar casado(a).')]
     FisCasado: Boolean;
     [Past('Data precisa ser no passado.')]
     FdataAtual: TDate;
@@ -83,7 +83,7 @@ end;
 
 constructor ValidEmail.Create;
 begin
-  FValid := true;
+
 end;
 
 constructor ValidEmail.Create(errorMessage: String);
@@ -96,6 +96,7 @@ function ValidEmail.execute(field: TRttiField; obj: TObject): Boolean;
 var
   regex: TRegEx;
 begin
+  FValid := true;
   if field.FieldType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     regex := TRegEx.Create('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$');

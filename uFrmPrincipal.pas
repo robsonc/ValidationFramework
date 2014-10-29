@@ -15,14 +15,22 @@ type
     lbNome: TLabel;
     btnSalvar: TButton;
     lbErrorMessage: TLabel;
-    bsCliente: TPrototypeBindSource;
-    BindingsList1: TBindingsList;
-    LinkControlToField1: TLinkControlToField;
-    bsErrors: TPrototypeBindSource;
+    editIdade: TEdit;
+    Label1: TLabel;
+    lbIdadeError: TLabel;
+    lbFilhos: TLabel;
+    editFilhos: TEdit;
+    lbFilhosError: TLabel;
+    ckCasado: TCheckBox;
+    lbCasadoError: TLabel;
+    lbEmail: TLabel;
+    editEmail: TEdit;
+    lbEmailError: TLabel;
     procedure btnSalvarClick(Sender: TObject);
     procedure bsClienteCreateAdapter(Sender: TObject;
       var ABindSourceAdapter: TBindSourceAdapter);
   private
+    procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
     { Private declarations }
   public
     { Public declarations }
@@ -48,28 +56,40 @@ var
   validator: TValidator;
 begin
   lbErrorMessage.Visible := false;
+  lbIdadeError.Visible := false;
+  lbFilhosError.Visible := false;
+  lbCasadoError.Visible := false;
+  lbEmailError.Visible := false;
 
   validator := TValidator.Create;
 
   cliente := TCliente.Create;
   cliente.Nome := editNome.Text;
-  cliente.idade := 18;
-  cliente.Filhos := 3;
-  cliente.isCasado := true;
+  cliente.idade := StrToInt(editIdade.Text);
+  cliente.Filhos := StrToInt(editFilhos.Text);
+  cliente.isCasado := ckCasado.Checked;
   cliente.dataAtual := Date;
-  cliente.Email := 'robson_coutinho@yahoo.com.br';
+  cliente.Email := editEmail.Text;
 
   if not validator.validate(cliente) then
   begin
     for msg in validator.getErrorMessages do
     begin
-      if msg.FieldName = 'FNome' then
-      begin
-        lbErrorMessage.Caption := msg.Messages[0];
-        lbErrorMessage.Visible := true;
-      end;
-      ShowMessage(msg.Messages[0]);
+      showErrorMessage('FNome', msg, lbErrorMessage);
+      showErrorMessage('Fidade', msg, lbIdadeError);
+      showErrorMessage('FFilhos', msg, lbFilhosError);
+      showErrorMessage('FisCasado', msg, lbCasadoError);
+      showErrorMessage('FEmail', msg, lbEmailError);
     end;
+  end;
+end;
+
+procedure TForm1.showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
+begin
+  if msg.FieldName = field then
+  begin
+    errorLabel.Caption := msg.Messages[0];
+    errorLabel.Visible := true;
   end;
 end;
 
