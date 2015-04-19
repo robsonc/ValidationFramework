@@ -168,7 +168,7 @@ begin
   Result := true;
   FErrorMessages.Clear;
 
-  rType := context.GetType(TCliente.ClassInfo);
+  rType := context.GetType(obj.ClassInfo);
   for rField in rType.GetFields do
   begin
     errorMessage := TErrorMessage.Create;

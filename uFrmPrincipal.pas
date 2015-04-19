@@ -26,6 +26,7 @@ type
     lbEmail: TLabel;
     editEmail: TEdit;
     lbEmailError: TLabel;
+    BalloonHint1: TBalloonHint;
     procedure btnSalvarClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
@@ -75,7 +76,11 @@ begin
           showErrorMessage('FisCasado', msg, lbCasadoError);
           showErrorMessage('FEmail', msg, lbEmailError);
 
-          ShowMessage(msg.Messages[0]);
+//          editNome.Hint := 'mensagem de erro';
+//          editNome.ShowHint := true;
+//          editNome.SetFocus;
+
+//          ShowMessage(msg.Messages[0]);
         end;
       end;
     finally

@@ -151,6 +151,7 @@ object Form1: TForm1
     Top = 23
     Width = 345
     Height = 21
+    CustomHint = BalloonHint1
     TabOrder = 0
   end
   object btnSalvar: TButton
@@ -198,5 +199,9 @@ object Form1: TForm1
     Width = 345
     Height = 21
     TabOrder = 5
+  end
+  object BalloonHint1: TBalloonHint
+    Left = 312
+    Top = 184
   end
 end

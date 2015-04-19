@@ -43,7 +43,8 @@ type
     FEmail: String;
     [NotNull('Telefone é obritório.')]
     FTelefone: TTelefone;
-    //FTeste: Integer;
+    [NotNull]
+    FTeste: Integer;
     procedure SetNome(const Value: String);
     procedure Setidade(const Value: Integer);
     procedure SetFilhos(const Value: Integer);
