@@ -6,6 +6,7 @@ uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions;
 
 type
+  IValidator = interface;
   TValidator = class;
 
   TErrorMessage = class
@@ -25,8 +26,10 @@ type
   protected
     FValid: Boolean;
     FErrorMessage: String;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); virtual; abstract;
   public
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; virtual; abstract;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
     function isValid(): Boolean;
     function getErrorMessage(): String;
   end;
@@ -35,7 +38,8 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Min = class(TValidationAttribute)
@@ -44,7 +48,8 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -54,7 +59,8 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -64,7 +70,8 @@ type
   public
     constructor Create(regex: String); overload;
     constructor Create(regex: String; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
     property Value: String read FValue write FValue;
   end;
 
@@ -72,14 +79,16 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   AssertFalse = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Size = class(TValidationAttribute)
@@ -94,41 +103,47 @@ type
     constructor Create(min: Integer; max: Integer; errorMessage: String); overload;
     property Min: Integer read FMin write FMin;
     property Max: Integer read FMax write FMax;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Future = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Past = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   NotNull = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Null = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   Valid = class(TValidationAttribute)
   public
     constructor Create;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
 
   //digits
@@ -144,6 +159,7 @@ type
 
   TValidator = class(TInterfacedObject, IValidator)
   private
+    FValidatedObjects: TDictionary<Integer, TObject>;
     FErrorMessages: TList<TErrorMessage>;
     procedure executeValidation(member: TRttiMember;
       errorMessage: TErrorMessage; obj: TObject);
@@ -167,11 +183,13 @@ end;
 
 constructor TValidator.Create;
 begin
+  FValidatedObjects := TDictionary<Integer, TObject>.Create;
   FErrorMessages := TObjectList<TErrorMessage>.Create;
 end;
 
 destructor TValidator.Destroy;
 begin
+  FValidatedObjects.Free;
   FErrorMessages.Free;
   inherited;
 end;
@@ -195,6 +213,14 @@ begin
   if obj = nil then
   begin
     raise EArgumentNilException.Create('Objeto não pode ser nulo.');
+  end;
+
+  if FValidatedObjects.ContainsKey(obj.GetHashCode()) then
+  begin
+    Exit;
+  end else
+  begin
+    FValidatedObjects.Add(obj.GetHashCode, obj);
   end;
 
   Result := true;
@@ -227,16 +253,19 @@ end;
 procedure TValidator.executeValidation(member: TRttiMember;
   errorMessage: TErrorMessage; obj: TObject);
 var
-  localrAttr: TCustomAttribute;
+  rAttr: TCustomAttribute;
 begin
-  for localrAttr in member.GetAttributes do
+  for rAttr in member.GetAttributes do
   begin
-    if localrAttr is TValidationAttribute then
+    if rAttr is TValidationAttribute then
     begin
-      TValidationAttribute(localrAttr).execute(member, obj, Self);
-      if not TValidationAttribute(localrAttr).isValid then
+      with TValidationAttribute(rAttr) do
       begin
-        errorMessage.Messages.Add(TValidationAttribute(localrAttr).getErrorMessage);
+        execute(member, obj, Self);
+        if not isValid() then
+        begin
+          errorMessage.Messages.Add(getErrorMessage());
+        end;
       end;
     end;
   end;
@@ -266,24 +295,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Required.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  rMember: TRttiMember;
-  value: TValue;
+procedure Required.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
   case rType.TypeKind of
 //    tkUnknown: ;
 //    tkInteger: ;
@@ -330,23 +344,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Min.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
+procedure Min.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
   if rType.TypeKind = tkInteger then
   begin
     if value.AsInteger < Self.FValue then
@@ -370,23 +370,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Max.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
+procedure Max.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
   if rType.TypeKind = tkInteger then
   begin
     if value.AsInteger > Self.FValue then
@@ -410,24 +396,11 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Pattern.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
+procedure Pattern.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 var
-  rType: TRttiType;
   regex: TRegEx;
-  value: TValue;
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
   if rType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     regex := TRegEx.Create(FValue);
@@ -451,24 +424,13 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertTrue.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
+procedure AssertTrue.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 begin
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
-  FValid := true;
   if not value.AsBoolean then
+  begin
     FValid := false;
+  end;
 end;
 
 { AssertFalse }
@@ -484,27 +446,40 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertFalse.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
+procedure AssertFalse.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
+begin
+  if value.AsBoolean then
+  begin
+    FValid := false;
+  end;
+end;
+
+{ TValidationAttribute }
+
+function TValidationAttribute.execute(member: TRttiMember; obj: TObject;
+  validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
+  rTypeName: string;
 begin
+  FValid := true;
+
   if member is TRttiField then
   begin
     rType := TRttiField(member).FieldType;
     value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
   end else if member is TRttiProperty then
   begin
     rType := TRttiProperty(member).PropertyType;
     value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
   end;
 
-  FValid := true;
-  if value.AsBoolean then
-    FValid := false;
+  Self.doValidation(rType, rTypeName, value, validator);
 end;
-
-{ TValidationAttribute }
 
 function TValidationAttribute.getErrorMessage: String;
 begin
@@ -547,25 +522,11 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Size.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
+procedure Size.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 var
-  rFieldType: TRttiType;
   fieldLength: Integer;
-  rType: TRttiType;
-  value: TValue;
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-  end;
-
   if rType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     fieldLength := Length(value.AsString);
@@ -617,26 +578,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Future.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
+procedure Future.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
   begin
     if value.AsType<TDate> <= Date then
@@ -657,26 +601,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Past.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
+procedure Past.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
   begin
     if value.AsType<TDate> >= Date then
@@ -696,26 +623,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function NotNull.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
+procedure NotNull.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if rType.TypeKind = tkClass then
   begin
     if value.AsObject = nil then
@@ -723,7 +633,6 @@ begin
       FValid := false;
     end;
   end;
-
 end;
 
 { Null }
@@ -738,26 +647,9 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Null.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
+procedure Null.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if rType.TypeKind = tkClass then
   begin
     if not (value.AsObject = nil) then
@@ -774,26 +666,9 @@ begin
 
 end;
 
-function Valid.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
-var
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
+procedure Valid.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+  validator: IValidator);
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if rType.TypeKind = tkClass then
   begin
     if not validator.validate(value.AsObject) then

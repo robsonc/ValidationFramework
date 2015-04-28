@@ -10,16 +10,24 @@ type
     //^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
   end;
+
+  TCliente = class;
+  TTelefone = class;
 
   TTelefone = class
   private
     FDDD: String;
     FNumero: String;
+    FCliente: TCliente;
     procedure SetDDD(const Value: String);
     procedure SetNumero(const Value: String);
+    procedure SetCliente(const Value: TCliente);
   public
+    [Valid]
+    property Cliente: TCliente read FCliente write SetCliente;
     property DDD: String read FDDD write SetDDD;
     [Required('Número do Telefone é obrigatório.')]
     property Numero: String read FNumero write SetNumero;
@@ -124,27 +132,11 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function ValidEmail.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
+procedure ValidEmail.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
 var
   regex: TRegEx;
-  rType: TRttiType;
-  value: TValue;
-  rTypeName: string;
 begin
-  FValid := true;
-
-  if member is TRttiField then
-  begin
-    rType := TRttiField(member).FieldType;
-    value := TRttiField(member).GetValue(obj);
-    rTypeName := TRttiField(member).FieldType.Name;
-  end else if member is TRttiProperty then
-  begin
-    rType := TRttiProperty(member).PropertyType;
-    value := TRttiProperty(member).GetValue(obj);
-    rTypeName := TRttiProperty(member).PropertyType.Name;
-  end;
-
   if rType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     regex := TRegEx.Create('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$');
@@ -154,6 +146,11 @@ begin
 end;
 
 { TTelefone }
+
+procedure TTelefone.SetCliente(const Value: TCliente);
+begin
+  FCliente := Value;
+end;
 
 procedure TTelefone.SetDDD(const Value: String);
 begin

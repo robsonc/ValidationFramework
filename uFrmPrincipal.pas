@@ -75,6 +75,7 @@ begin
     telefone.Numero := editTelefone.Text;
 
     cliente.Telefone := telefone;
+    telefone.Cliente := cliente;
 
     if not validator.validate(cliente) then
     begin
