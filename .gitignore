@@ -55,3 +55,7 @@ __history/
 
 # Castalia statistics file
 *.stat
+
+# Other Files
+PrjValidation_MemoryManager_EventLog.txt
+bugreport.txt

@@ -147,6 +147,35 @@ object Form1: TForm1
     ParentFont = False
     Visible = False
   end
+  object Label2: TLabel
+    Left = 21
+    Top = 170
+    Width = 49
+    Height = 13
+    Caption = 'Telefone'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = [fsBold]
+    ParentFont = False
+  end
+  object lblTelefoneError: TLabel
+    Left = 20
+    Top = 204
+    Width = 69
+    Height = 13
+    Caption = 'Telefone Error'
+    Color = clBtnFace
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clRed
+    Font.Height = -11
+    Font.Name = 'Tahoma'
+    Font.Style = []
+    ParentColor = False
+    ParentFont = False
+    Visible = False
+  end
   object editNome: TEdit
     Left = 21
     Top = 23
@@ -201,8 +230,15 @@ object Form1: TForm1
     Height = 21
     TabOrder = 5
   end
+  object editTelefone: TEdit
+    Left = 21
+    Top = 183
+    Width = 345
+    Height = 21
+    TabOrder = 6
+  end
   object BalloonHint1: TBalloonHint
-    Left = 312
-    Top = 184
+    Left = 176
+    Top = 248
   end
 end

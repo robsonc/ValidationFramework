@@ -27,6 +27,9 @@ type
     editEmail: TEdit;
     lbEmailError: TLabel;
     BalloonHint1: TBalloonHint;
+    Label2: TLabel;
+    editTelefone: TEdit;
+    lblTelefoneError: TLabel;
     procedure btnSalvarClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
@@ -48,12 +51,14 @@ var
   cliente: TCliente;
   msg: TErrorMessage;
   validator: IValidator;
+  telefone: TTelefone;
 begin
   lbErrorMessage.Visible := false;
   lbIdadeError.Visible := false;
   lbFilhosError.Visible := false;
   lbCasadoError.Visible := false;
   lbEmailError.Visible := false;
+  lblTelefoneError.Visible := False;
 
   validator := TValidator.Create;
 
@@ -66,16 +71,24 @@ begin
     cliente.dataAtual := Date;
     cliente.Email := editEmail.Text;
 
+    telefone := TTelefone.Create;
+    telefone.Numero := editTelefone.Text;
+
+    cliente.Telefone := telefone;
+
     if not validator.validate(cliente) then
     begin
-      for msg in validator.getErrorMessages do
+      for msg in validator.getErrorMessages() do
       begin
         showErrorMessage('Nome', msg, lbErrorMessage);
         showErrorMessage('idade', msg, lbIdadeError);
         showErrorMessage('Filhos', msg, lbFilhosError);
         showErrorMessage('isCasado', msg, lbCasadoError);
         showErrorMessage('Email', msg, lbEmailError);
+        showErrorMessage('Numero', msg, lblTelefoneError);
       end;
+
+      validator.clear();
     end else
     begin
       ShowMessage('Cliente salvo com sucesso!');
@@ -97,6 +110,8 @@ begin
   begin
     errorLabel.Caption := msg.Messages[0];
     errorLabel.Visible := true;
+    errorLabel.Hint := msg.Messages[0];
+    errorLabel.ShowHint := True;
   end;
 end;
 

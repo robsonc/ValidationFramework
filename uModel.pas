@@ -10,7 +10,7 @@ type
     //^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   TTelefone = class
@@ -21,6 +21,7 @@ type
     procedure SetNumero(const Value: String);
   public
     property DDD: String read FDDD write SetDDD;
+    [Required('Número do Telefone é obrigatório.')]
     property Numero: String read FNumero write SetNumero;
   end;
 
@@ -33,8 +34,6 @@ type
     FdataAtual: TDate;
     FEmail: String;
     FTelefone: TTelefone;
-    [NotNull]
-    FTeste: Integer;
     procedure SetNome(const Value: String);
     procedure Setidade(const Value: Integer);
     procedure SetFilhos(const Value: Integer);
@@ -58,13 +57,24 @@ type
     property dataAtual: TDate read FdataAtual write SetdataAtual;
     [ValidEmail('E-mail inválido.')]
     property Email: String read FEmail write SetEmail;
-    //[NotNull('Telefone é obritório.')]
+    [Valid]
     property Telefone: TTelefone read FTelefone write SetTelefone;
+    destructor Destroy; override;
   end;
 
 implementation
 
 { TCliente }
+
+destructor TCliente.Destroy;
+begin
+  if FTelefone <> nil then
+  begin
+    FTelefone.Free;
+  end;
+
+  inherited;
+end;
 
 procedure TCliente.SetdataAtual(const Value: TDate);
 begin
@@ -114,7 +124,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function ValidEmail.execute(member: TRttiMember; obj: TObject): Boolean;
+function ValidEmail.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   regex: TRegEx;
   rType: TRttiType;

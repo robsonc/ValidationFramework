@@ -6,6 +6,8 @@ uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions;
 
 type
+  TValidator = class;
+
   TErrorMessage = class
   private
     FFieldName: String;
@@ -24,7 +26,7 @@ type
     FValid: Boolean;
     FErrorMessage: String;
   public
-    function execute(member: TRttiMember; obj: TObject): Boolean; virtual; abstract;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; virtual; abstract;
     function isValid(): Boolean;
     function getErrorMessage(): String;
   end;
@@ -33,7 +35,7 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   Min = class(TValidationAttribute)
@@ -42,7 +44,7 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -52,7 +54,7 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -62,7 +64,7 @@ type
   public
     constructor Create(regex: String); overload;
     constructor Create(regex: String; errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
     property Value: String read FValue write FValue;
   end;
 
@@ -70,14 +72,14 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   AssertFalse = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   Size = class(TValidationAttribute)
@@ -92,35 +94,41 @@ type
     constructor Create(min: Integer; max: Integer; errorMessage: String); overload;
     property Min: Integer read FMin write FMin;
     property Max: Integer read FMax write FMax;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   Future = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   Past = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   NotNull = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   Null = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(member: TRttiMember; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
+  end;
+
+  Valid = class(TValidationAttribute)
+  public
+    constructor Create;
+    function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean; override;
   end;
 
   //digits
@@ -131,6 +139,7 @@ type
   ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
     function validate(obj: TObject): Boolean;
     function getErrorMessages(): TList<TErrorMessage>;
+    procedure clear();
   end;
 
   TValidator = class(TInterfacedObject, IValidator)
@@ -144,11 +153,17 @@ type
     destructor Destroy; override;
     function validate(obj: TObject): Boolean;
     function getErrorMessages(): TList<TErrorMessage>;
+    procedure clear();
   end;
 
 implementation
 
 { TValidation }
+
+procedure TValidator.clear;
+begin
+  FErrorMessages.Clear;
+end;
 
 constructor TValidator.Create;
 begin
@@ -177,8 +192,13 @@ var
   rMember: TRttiMember;
   rParameter: TRttiParameter;
 begin
+  if obj = nil then
+  begin
+    raise EArgumentNilException.Create('Objeto não pode ser nulo.');
+  end;
+
   Result := true;
-  FErrorMessages.Clear;
+  //FErrorMessages.Clear;
 
   rType := context.GetType(obj.ClassInfo);
 
@@ -213,7 +233,7 @@ begin
   begin
     if localrAttr is TValidationAttribute then
     begin
-      TValidationAttribute(localrAttr).execute(member, obj);
+      TValidationAttribute(localrAttr).execute(member, obj, Self);
       if not TValidationAttribute(localrAttr).isValid then
       begin
         errorMessage.Messages.Add(TValidationAttribute(localrAttr).getErrorMessage);
@@ -246,7 +266,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Required.execute(member: TRttiMember; obj: TObject): Boolean;
+function Required.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   rMember: TRttiMember;
@@ -310,7 +330,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Min.execute(member: TRttiMember; obj: TObject): Boolean;
+function Min.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -350,7 +370,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Max.execute(member: TRttiMember; obj: TObject): Boolean;
+function Max.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -390,7 +410,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Pattern.execute(member: TRttiMember; obj: TObject): Boolean;
+function Pattern.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   regex: TRegEx;
@@ -431,7 +451,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertTrue.execute(member: TRttiMember; obj: TObject): Boolean;
+function AssertTrue.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -464,7 +484,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertFalse.execute(member: TRttiMember; obj: TObject): Boolean;
+function AssertFalse.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -527,7 +547,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Size.execute(member: TRttiMember; obj: TObject): Boolean;
+function Size.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rFieldType: TRttiType;
   fieldLength: Integer;
@@ -597,7 +617,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Future.execute(member: TRttiMember; obj: TObject): Boolean;
+function Future.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -637,7 +657,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Past.execute(member: TRttiMember; obj: TObject): Boolean;
+function Past.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -676,7 +696,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function NotNull.execute(member: TRttiMember; obj: TObject): Boolean;
+function NotNull.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -718,7 +738,7 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Null.execute(member: TRttiMember; obj: TObject): Boolean;
+function Null.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
 var
   rType: TRttiType;
   value: TValue;
@@ -741,6 +761,42 @@ begin
   if rType.TypeKind = tkClass then
   begin
     if not (value.AsObject = nil) then
+    begin
+      FValid := false;
+    end;
+  end;
+end;
+
+{ Valid }
+
+constructor Valid.Create;
+begin
+
+end;
+
+function Valid.execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
+begin
+  FValid := true;
+
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if rType.TypeKind = tkClass then
+  begin
+    if not validator.validate(value.AsObject) then
     begin
       FValid := false;
     end;
