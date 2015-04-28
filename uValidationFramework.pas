@@ -3,24 +3,12 @@ unit uValidationFramework;
 interface
 
 uses System.Rtti, System.TypInfo, System.SysUtils,
-  System.Generics.Collections, RegularExpressions;
+  System.Generics.Collections, RegularExpressions, System.Math, System.Types;
 
 type
   IValidator = interface;
   TValidator = class;
-
-  TErrorMessage = class
-  private
-    FFieldName: String;
-    FMessages: TList<String>;
-    procedure SetFieldName(const Value: String);
-    procedure SetMessages(const Value: TList<String>);
-  public
-    constructor Create;
-    destructor Destroy; override;
-    property FieldName: String read FFieldName write SetFieldName;
-    property Messages: TList<String> read FMessages write SetMessages;
-  end;
+  TErrorMessage = class;
 
   TValidationAttribute = class abstract(TCustomAttribute)
   protected
@@ -44,8 +32,10 @@ type
 
   Min = class(TValidationAttribute)
   private
+    FValueDouble: Double;
     FValue: Integer;
   public
+    constructor Create(value: Double); overload;
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
@@ -55,8 +45,10 @@ type
 
   Max = class(TValidationAttribute)
   private
+    FValueDouble: Double;
     FValue: Integer;
   public
+    constructor Create(value: Double); overload;
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
@@ -109,7 +101,6 @@ type
 
   Future = class(TValidationAttribute)
   public
-    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
@@ -117,7 +108,6 @@ type
 
   Past = class(TValidationAttribute)
   public
-    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
@@ -125,7 +115,6 @@ type
 
   NotNull = class(TValidationAttribute)
   public
-    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
@@ -133,13 +122,18 @@ type
 
   Null = class(TValidationAttribute)
   public
-    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
   end;
 
   Valid = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+  end;
+
+  NotBlank = class(TValidationAttribute)
   public
     constructor Create;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
@@ -149,6 +143,19 @@ type
   //digits
   //DecimalMin
   //DecimalMax
+
+  TErrorMessage = class
+  private
+    FFieldName: String;
+    FMessages: TList<String>;
+    procedure SetFieldName(const Value: String);
+    procedure SetMessages(const Value: TList<String>);
+  public
+    constructor Create;
+    destructor Destroy; override;
+    property FieldName: String read FFieldName write SetFieldName;
+    property Messages: TList<String> read FMessages write SetMessages;
+  end;
 
   IValidator = interface(IInvokable)
   ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
@@ -160,7 +167,7 @@ type
   TValidator = class(TInterfacedObject, IValidator)
   private
     FValidatedObjects: TDictionary<Integer, TObject>;
-    FErrorMessages: TList<TErrorMessage>;
+    FListConstraintViolations: TList<TErrorMessage>;
     procedure executeValidation(member: TRttiMember;
       errorMessage: TErrorMessage; obj: TObject);
     procedure addErrorMessages(errorMessage: TErrorMessage);
@@ -174,29 +181,52 @@ type
 
 implementation
 
+{ TErrorMessage }
+
+constructor TErrorMessage.Create;
+begin
+  FMessages := TList<String>.Create;
+end;
+
+destructor TErrorMessage.Destroy;
+begin
+  FMessages.Free;
+  inherited;
+end;
+
+procedure TErrorMessage.SetFieldName(const Value: String);
+begin
+  FFieldName := Value;
+end;
+
+procedure TErrorMessage.SetMessages(const Value: TList<String>);
+begin
+  FMessages := Value;
+end;
+
 { TValidation }
 
 procedure TValidator.clear;
 begin
-  FErrorMessages.Clear;
+  FListConstraintViolations.Clear;
 end;
 
 constructor TValidator.Create;
 begin
   FValidatedObjects := TDictionary<Integer, TObject>.Create;
-  FErrorMessages := TObjectList<TErrorMessage>.Create;
+  FListConstraintViolations := TObjectList<TErrorMessage>.Create;
 end;
 
 destructor TValidator.Destroy;
 begin
   FValidatedObjects.Free;
-  FErrorMessages.Free;
+  FListConstraintViolations.Free;
   inherited;
 end;
 
 function TValidator.getErrorMessages: TList<TErrorMessage>;
 begin
-  Result := FErrorMessages;
+  Result := FListConstraintViolations;
 end;
 
 function TValidator.validate(obj: TObject): Boolean;
@@ -224,7 +254,6 @@ begin
   end;
 
   Result := true;
-  //FErrorMessages.Clear;
 
   rType := context.GetType(obj.ClassInfo);
 
@@ -240,13 +269,13 @@ begin
  for rProperty in rType.GetProperties do
   begin
     errorMessage := TErrorMessage.Create;
-    errorMessage.FieldName := rProperty.Name;
+    errorMessage.FieldName := rType.Name + '.' + rProperty.Name;
 
     executeValidation(rProperty, errorMessage, obj);
     addErrorMessages(errorMessage);
   end;
 
-  if FErrorMessages.Count > 0 then
+  if FListConstraintViolations.Count > 0 then
     Result := false;
 end;
 
@@ -275,7 +304,7 @@ procedure TValidator.addErrorMessages(errorMessage: TErrorMessage);
 begin
   if errorMessage.Messages.Count > 0 then
   begin
-    FErrorMessages.Add(errorMessage);
+    FListConstraintViolations.Add(errorMessage);
   end else
   begin
     errorMessage.Free;
@@ -344,6 +373,12 @@ begin
   FErrorMessage := errorMessage;
 end;
 
+constructor Min.Create(value: Double);
+begin
+  FErrorMessage := 'Valor não pode ser menor especificado';
+  FValueDouble := value;
+end;
+
 procedure Min.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
@@ -352,6 +387,14 @@ begin
     if value.AsInteger < Self.FValue then
     begin
       FValid := false;
+    end;
+  end;
+
+  if rType.TypeKind = tkFloat then
+  begin
+    if CompareValue(value.AsType<Double>, Self.FValueDouble) = LessThanValue then
+    begin
+      FValid := False;
     end;
   end;
 end;
@@ -370,6 +413,12 @@ begin
   FErrorMessage := errorMessage;
 end;
 
+constructor Max.Create(value: Double);
+begin
+  FValueDouble := value;
+  FErrorMessage := 'Valor não pode ser maior que o especificado';
+end;
+
 procedure Max.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
@@ -378,6 +427,14 @@ begin
     if value.AsInteger > Self.FValue then
     begin
       FValid := false;
+    end;
+  end;
+
+  if rType.TypeKind = tkFloat then
+  begin
+    if CompareValue(value.AsType<Double>, Self.FValueDouble) = GreaterThanValue then
+    begin
+      FValid := False;
     end;
   end;
 end;
@@ -495,12 +552,11 @@ end;
 
 constructor Size.Create;
 begin
-
+  raise Exception.Create('Você deve especificar os valores min ou max.');
 end;
 
 constructor Size.Create(min: Integer);
 begin
-  Self.Create;
   FMin := min;
 end;
 
@@ -542,35 +598,7 @@ begin
   end;
 end;
 
-{ TErrorMessage }
-
-constructor TErrorMessage.Create;
-begin
-  FMessages := TList<String>.Create;
-end;
-
-destructor TErrorMessage.Destroy;
-begin
-  FMessages.Free;
-  inherited;
-end;
-
-procedure TErrorMessage.SetFieldName(const Value: String);
-begin
-  FFieldName := Value;
-end;
-
-procedure TErrorMessage.SetMessages(const Value: TList<String>);
-begin
-  FMessages := Value;
-end;
-
 { Future }
-
-constructor Future.Create;
-begin
-
-end;
 
 constructor Future.Create(errorMessage: String);
 begin
@@ -590,11 +618,6 @@ end;
 
 { Past }
 
-constructor Past.Create;
-begin
-
-end;
-
 constructor Past.Create(errorMessage: String);
 begin
   Self.Create;
@@ -612,11 +635,6 @@ begin
 end;
 
 { NotNull }
-
-constructor NotNull.Create;
-begin
-
-end;
 
 constructor NotNull.Create(errorMessage: String);
 begin
@@ -637,11 +655,6 @@ end;
 
 { Null }
 
-constructor Null.Create;
-begin
-
-end;
-
 constructor Null.Create(errorMessage: String);
 begin
   FErrorMessage := errorMessage;
@@ -661,19 +674,34 @@ end;
 
 { Valid }
 
-constructor Valid.Create;
-begin
-
-end;
-
 procedure Valid.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
+  FValid := True;
   if rType.TypeKind = tkClass then
   begin
-    if not validator.validate(value.AsObject) then
+    if not (value.AsObject = nil) then
     begin
-      FValid := false;
+      validator.validate(value.AsObject)
+    end;
+  end;
+end;
+
+{ NotBlank }
+
+constructor NotBlank.Create;
+begin
+  FErrorMessage := 'Não pode estar em branco.';
+end;
+
+procedure NotBlank.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
+begin
+  if rType.TypeKind in [tkString, tkWString, tkUString] then
+  begin
+    if Length(Trim(value.AsString)) = 0 then
+    begin
+      FValid := False;
     end;
   end;
 end;

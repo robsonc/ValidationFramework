@@ -7,7 +7,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, uModel,
   uValidationFramework, Vcl.Bind.GenData, System.Rtti, System.Bindings.Outputs,
   Vcl.Bind.Editors, Data.Bind.EngExt, Vcl.Bind.DBEngExt, Data.Bind.Components,
-  Data.Bind.ObjectScope, RegularExpressions, System.TypInfo;
+  Data.Bind.ObjectScope, RegularExpressions, System.TypInfo, System.Generics.Collections;
 
 type
   TForm1 = class(TForm)
@@ -30,6 +30,7 @@ type
     Label2: TLabel;
     editTelefone: TEdit;
     lblTelefoneError: TLabel;
+    Memo1: TMemo;
     procedure btnSalvarClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
@@ -52,6 +53,8 @@ var
   msg: TErrorMessage;
   validator: IValidator;
   telefone: TTelefone;
+  errorMessages: TList<TErrorMessage>;
+  mensagem: String;
 begin
   lbErrorMessage.Visible := false;
   lbIdadeError.Visible := false;
@@ -70,6 +73,7 @@ begin
     cliente.isCasado := ckCasado.Checked;
     cliente.dataAtual := Date;
     cliente.Email := editEmail.Text;
+    cliente.Valor := 5;
 
     telefone := TTelefone.Create;
     telefone.Numero := editTelefone.Text;
@@ -77,16 +81,25 @@ begin
     cliente.Telefone := telefone;
     telefone.Cliente := cliente;
 
+    Memo1.Lines.Clear;
     if not validator.validate(cliente) then
     begin
-      for msg in validator.getErrorMessages() do
+      errorMessages := validator.getErrorMessages();
+      for msg in errorMessages do
       begin
-        showErrorMessage('Nome', msg, lbErrorMessage);
-        showErrorMessage('idade', msg, lbIdadeError);
-        showErrorMessage('Filhos', msg, lbFilhosError);
-        showErrorMessage('isCasado', msg, lbCasadoError);
-        showErrorMessage('Email', msg, lbEmailError);
-        showErrorMessage('Numero', msg, lblTelefoneError);
+        showErrorMessage('TCliente.Nome', msg, lbErrorMessage);
+        showErrorMessage('TCliente.idade', msg, lbIdadeError);
+        showErrorMessage('TCliente.Filhos', msg, lbFilhosError);
+        showErrorMessage('TCliente.isCasado', msg, lbCasadoError);
+        showErrorMessage('TCliente.Email', msg, lbEmailError);
+        showErrorMessage('TCliente.Telefone', msg, lblTelefoneError);
+        showErrorMessage('TTelefone.Numero', msg, lblTelefoneError);
+
+        Memo1.Lines.Append(msg.FieldName);
+        for mensagem in msg.Messages do
+        begin
+          Memo1.Lines.Append('-----> ' + mensagem);
+        end;
       end;
 
       validator.clear();

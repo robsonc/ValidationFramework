@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Cadastro de Clientes'
-  ClientHeight = 316
+  ClientHeight = 462
   ClientWidth = 386
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -89,9 +89,9 @@ object Form1: TForm1
   object lbFilhosError: TLabel
     Left = 149
     Top = 102
-    Width = 55
+    Width = 54
     Height = 13
-    Caption = 'Idade Error'
+    Caption = 'Filhos Error'
     Color = clBtnFace
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clRed
@@ -185,8 +185,8 @@ object Form1: TForm1
     TabOrder = 0
   end
   object btnSalvar: TButton
-    Left = 290
-    Top = 264
+    Left = 291
+    Top = 429
     Width = 75
     Height = 25
     Caption = 'Salvar'
@@ -237,8 +237,15 @@ object Form1: TForm1
     Height = 21
     TabOrder = 6
   end
+  object Memo1: TMemo
+    Left = 21
+    Top = 240
+    Width = 345
+    Height = 169
+    TabOrder = 7
+  end
   object BalloonHint1: TBalloonHint
-    Left = 176
-    Top = 248
+    Left = 32
+    Top = 424
   end
 end

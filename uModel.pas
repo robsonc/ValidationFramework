@@ -42,6 +42,7 @@ type
     FdataAtual: TDate;
     FEmail: String;
     FTelefone: TTelefone;
+    FValor: Double;
     procedure SetNome(const Value: String);
     procedure Setidade(const Value: Integer);
     procedure SetFilhos(const Value: Integer);
@@ -49,14 +50,20 @@ type
     procedure SetdataAtual(const Value: TDate);
     procedure SetEmail(const Value: String);
     procedure SetTelefone(const Value: TTelefone);
+    procedure SetValor(const Value: Double);
   public
-    [Required('Este campo é obrigatório e não pode estar vazio.')]
-    [Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
+    [Min(10.00)]
+    property Valor: Double read FValor write SetValor;
+    //[Required('Este campo é obrigatório e não pode estar vazio.')]
+    [NotBlank]
+    //[Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
     [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
+    //[Size]
     property Nome: String read FNome write SetNome;
     [Min(18, 'Idade abaixo da idade mínima exigida de 18 anos.')]
     [Max(50, 'Idade acima da idade máxima de 50 anos.')]
     property idade: Integer read Fidade write Setidade;
+    [Required]
     [Max(3, 'Número de filhos excede o limite de 3 filhos.')]
     property Filhos: Integer read FFilhos write SetFilhos;
     [AssertTrue('É obrigatório estar casado(a).')]
@@ -65,6 +72,7 @@ type
     property dataAtual: TDate read FdataAtual write SetdataAtual;
     [ValidEmail('E-mail inválido.')]
     property Email: String read FEmail write SetEmail;
+    [NotNull('Telefone não pode ser nulo.')]
     [Valid]
     property Telefone: TTelefone read FTelefone write SetTelefone;
     destructor Destroy; override;
@@ -117,6 +125,11 @@ end;
 procedure TCliente.SetTelefone(const Value: TTelefone);
 begin
   FTelefone := Value;
+end;
+
+procedure TCliente.SetValor(const Value: Double);
+begin
+  FValor := Value;
 end;
 
 { ValidEmail }
