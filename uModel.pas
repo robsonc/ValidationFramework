@@ -10,7 +10,7 @@ type
     //^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   TTelefone = class
@@ -26,22 +26,12 @@ type
 
   TCliente = class
   private
-    [Required('Este campo é obrigatório e não pode estar vazio.')]
-    [Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
-    [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
     FNome: String;
-    [Min(18, 'Idade abaixo da idade mínima exigida de 18 anos.')]
-    [Max(50, 'Idade acima da idade máxima de 50 anos.')]
     Fidade: Integer;
-    [Max(3, 'Número de filhos excede o limite de 3 filhos.')]
     FFilhos: Integer;
-    [AssertTrue('É obrigatório estar casado(a).')]
     FisCasado: Boolean;
-    [Past('Data precisa ser no passado.')]
     FdataAtual: TDate;
-    [ValidEmail('E-mail inválido.')]
     FEmail: String;
-    [NotNull('Telefone é obritório.')]
     FTelefone: TTelefone;
     [NotNull]
     FTeste: Integer;
@@ -53,12 +43,22 @@ type
     procedure SetEmail(const Value: String);
     procedure SetTelefone(const Value: TTelefone);
   public
+    [Required('Este campo é obrigatório e não pode estar vazio.')]
+    [Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
+    [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
     property Nome: String read FNome write SetNome;
+    [Min(18, 'Idade abaixo da idade mínima exigida de 18 anos.')]
+    [Max(50, 'Idade acima da idade máxima de 50 anos.')]
     property idade: Integer read Fidade write Setidade;
+    [Max(3, 'Número de filhos excede o limite de 3 filhos.')]
     property Filhos: Integer read FFilhos write SetFilhos;
+    [AssertTrue('É obrigatório estar casado(a).')]
     property isCasado: Boolean read FisCasado write SetisCasado;
+    //[Past('Data precisa ser no passado.')]
     property dataAtual: TDate read FdataAtual write SetdataAtual;
+    [ValidEmail('E-mail inválido.')]
     property Email: String read FEmail write SetEmail;
+    //[NotNull('Telefone é obritório.')]
     property Telefone: TTelefone read FTelefone write SetTelefone;
   end;
 
@@ -114,15 +114,31 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function ValidEmail.execute(field: TRttiField; obj: TObject): Boolean;
+function ValidEmail.execute(member: TRttiMember; obj: TObject): Boolean;
 var
   regex: TRegEx;
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
 begin
   FValid := true;
-  if field.FieldType.TypeKind in [tkString, tkWString, tkUString] then
+
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if rType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     regex := TRegEx.Create('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$');
-    if not regex.IsMatch(field.GetValue(obj).AsString) then
+    if not regex.IsMatch(value.AsString) then
       FValid := false;
   end;
 end;

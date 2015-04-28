@@ -47,7 +47,7 @@ procedure TForm1.btnSalvarClick(Sender: TObject);
 var
   cliente: TCliente;
   msg: TErrorMessage;
-  validator: TValidator;
+  validator: IValidator;
 begin
   lbErrorMessage.Visible := false;
   lbIdadeError.Visible := false;
@@ -56,38 +56,32 @@ begin
   lbEmailError.Visible := false;
 
   validator := TValidator.Create;
+
+  cliente := TCliente.Create;
   try
-    cliente := TCliente.Create;
-    try
-      cliente.Nome := editNome.Text;
-      cliente.idade := StrToInt(editIdade.Text);
-      cliente.Filhos := StrToInt(editFilhos.Text);
-      cliente.isCasado := ckCasado.Checked;
-      cliente.dataAtual := Date;
-      cliente.Email := editEmail.Text;
+    cliente.Nome := editNome.Text;
+    cliente.idade := StrToInt(editIdade.Text);
+    cliente.Filhos := StrToInt(editFilhos.Text);
+    cliente.isCasado := ckCasado.Checked;
+    cliente.dataAtual := Date;
+    cliente.Email := editEmail.Text;
 
-      if not validator.validate(cliente) then
+    if not validator.validate(cliente) then
+    begin
+      for msg in validator.getErrorMessages do
       begin
-        for msg in validator.getErrorMessages do
-        begin
-          showErrorMessage('FNome', msg, lbErrorMessage);
-          showErrorMessage('Fidade', msg, lbIdadeError);
-          showErrorMessage('FFilhos', msg, lbFilhosError);
-          showErrorMessage('FisCasado', msg, lbCasadoError);
-          showErrorMessage('FEmail', msg, lbEmailError);
-
-//          editNome.Hint := 'mensagem de erro';
-//          editNome.ShowHint := true;
-//          editNome.SetFocus;
-
-//          ShowMessage(msg.Messages[0]);
-        end;
+        showErrorMessage('Nome', msg, lbErrorMessage);
+        showErrorMessage('idade', msg, lbIdadeError);
+        showErrorMessage('Filhos', msg, lbFilhosError);
+        showErrorMessage('isCasado', msg, lbCasadoError);
+        showErrorMessage('Email', msg, lbEmailError);
       end;
-    finally
-      cliente.Free;
+    end else
+    begin
+      ShowMessage('Cliente salvo com sucesso!');
     end;
   finally
-    validator.Free;
+    cliente.Free;
   end;
 end;
 

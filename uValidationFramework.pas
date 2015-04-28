@@ -2,7 +2,7 @@ unit uValidationFramework;
 
 interface
 
-uses System.Rtti, CodeSiteLogging, System.TypInfo, System.SysUtils, 
+uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions;
 
 type
@@ -24,7 +24,7 @@ type
     FValid: Boolean;
     FErrorMessage: String;
   public
-    function execute(field: TRttiField; obj: TObject): Boolean; virtual; abstract;
+    function execute(member: TRttiMember; obj: TObject): Boolean; virtual; abstract;
     function isValid(): Boolean;
     function getErrorMessage(): String;
   end;
@@ -33,7 +33,7 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   Min = class(TValidationAttribute)
@@ -42,7 +42,7 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -52,7 +52,7 @@ type
   public
     constructor Create(value: Integer); overload;
     constructor Create(value: Integer; errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
     property Value: Integer read FValue write FValue;
   end;
 
@@ -62,7 +62,7 @@ type
   public
     constructor Create(regex: String); overload;
     constructor Create(regex: String; errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
     property Value: String read FValue write FValue;
   end;
 
@@ -70,14 +70,14 @@ type
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   AssertFalse = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   Size = class(TValidationAttribute)
@@ -92,42 +92,53 @@ type
     constructor Create(min: Integer; max: Integer; errorMessage: String); overload;
     property Min: Integer read FMin write FMin;
     property Max: Integer read FMax write FMax;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   Future = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   Past = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   NotNull = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   Null = class(TValidationAttribute)
   public
     constructor Create; overload;
     constructor Create(errorMessage: String); overload;
-    function execute(field: TRttiField; obj: TObject): Boolean; override;
+    function execute(member: TRttiMember; obj: TObject): Boolean; override;
   end;
 
   //digits
+  //DecimalMin
+  //DecimalMax
 
-  TValidator = class
+  IValidator = interface(IInvokable)
+  ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
+    function validate(obj: TObject): Boolean;
+    function getErrorMessages(): TList<TErrorMessage>;
+  end;
+
+  TValidator = class(TInterfacedObject, IValidator)
   private
     FErrorMessages: TList<TErrorMessage>;
+    procedure executeValidation(member: TRttiMember;
+      errorMessage: TErrorMessage; obj: TObject);
+    procedure addErrorMessages(errorMessage: TErrorMessage);
   public
     constructor Create;
     destructor Destroy; override;
@@ -138,8 +149,6 @@ type
 implementation
 
 { TValidation }
-
-uses uModel;
 
 constructor TValidator.Create;
 begin
@@ -160,40 +169,68 @@ end;
 function TValidator.validate(obj: TObject): Boolean;
 var
   context: TRttiContext;
-  rType, rFieldType: TRttiType;
+  rType: TRttiType;
   rField: TRttiField;
   rAttr: TCustomAttribute;
+  rProperty: TRttiProperty;
   errorMessage: TErrorMessage;
+  rMember: TRttiMember;
+  rParameter: TRttiParameter;
 begin
   Result := true;
   FErrorMessages.Clear;
 
   rType := context.GetType(obj.ClassInfo);
+
   for rField in rType.GetFields do
   begin
     errorMessage := TErrorMessage.Create;
     errorMessage.FieldName := rField.Name;
 
-    for rAttr in rField.GetAttributes do
-    begin
-      if rAttr is TValidationAttribute then
-      begin
-        TValidationAttribute(rAttr).execute(rField, obj);
-        if not TValidationAttribute(rAttr).isValid() then
-        begin
-          errorMessage.Messages.Add(TValidationAttribute(rAttr).getErrorMessage());
-        end;
-      end;
-    end;
+    executeValidation(rField, errorMessage, obj);
+    addErrorMessages(errorMessage);
+  end;
 
-    if errorMessage.Messages.Count > 0 then
-      FErrorMessages.Add(errorMessage)
-    else
-      errorMessage.Free;
+ for rProperty in rType.GetProperties do
+  begin
+    errorMessage := TErrorMessage.Create;
+    errorMessage.FieldName := rProperty.Name;
+
+    executeValidation(rProperty, errorMessage, obj);
+    addErrorMessages(errorMessage);
   end;
 
   if FErrorMessages.Count > 0 then
     Result := false;
+end;
+
+procedure TValidator.executeValidation(member: TRttiMember;
+  errorMessage: TErrorMessage; obj: TObject);
+var
+  localrAttr: TCustomAttribute;
+begin
+  for localrAttr in member.GetAttributes do
+  begin
+    if localrAttr is TValidationAttribute then
+    begin
+      TValidationAttribute(localrAttr).execute(member, obj);
+      if not TValidationAttribute(localrAttr).isValid then
+      begin
+        errorMessage.Messages.Add(TValidationAttribute(localrAttr).getErrorMessage);
+      end;
+    end;
+  end;
+end;
+
+procedure TValidator.addErrorMessages(errorMessage: TErrorMessage);
+begin
+  if errorMessage.Messages.Count > 0 then
+  begin
+    FErrorMessages.Add(errorMessage);
+  end else
+  begin
+    errorMessage.Free;
+  end;
 end;
 
 { Required }
@@ -209,13 +246,25 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Required.execute(field: TRttiField; obj: TObject): Boolean;
+function Required.execute(member: TRttiMember; obj: TObject): Boolean;
 var
-  rFieldType: TRttiType;
+  rType: TRttiType;
+  rMember: TRttiMember;
+  value: TValue;
 begin
   FValid := true;
-  rFieldType := field.FieldType;
-  case rFieldType.TypeKind of
+
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
+  case rType.TypeKind of
 //    tkUnknown: ;
 //    tkInteger: ;
 //    tkChar: ;
@@ -223,9 +272,10 @@ begin
 //    tkFloat: ;
     tkString, tkUString, tkWString:
     begin
-      CodeSite.Send(rFieldType.ToString);
-      if not (field.GetValue(obj).AsString <> '') then
+      if not (value.AsString <> '') then
+      begin
         FValid := false;
+      end;
     end;
 //    tkSet: ;
 //    tkClass: ;
@@ -260,16 +310,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Min.execute(field: TRttiField; obj: TObject): Boolean;
+function Min.execute(member: TRttiMember; obj: TObject): Boolean;
 var
-  rFieldType: TRttiType;
+  rType: TRttiType;
+  value: TValue;
 begin
   FValid := true;
-  rFieldType := field.FieldType;
-  if rFieldType.TypeKind = tkInteger then
+
+  if member is TRttiField then
   begin
-    if field.GetValue(obj).AsInteger < Self.FValue then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
+  if rType.TypeKind = tkInteger then
+  begin
+    if value.AsInteger < Self.FValue then
+    begin
       FValid := false;
+    end;
   end;
 end;
 
@@ -287,16 +350,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Max.execute(field: TRttiField; obj: TObject): Boolean;
+function Max.execute(member: TRttiMember; obj: TObject): Boolean;
 var
-  rFieldType: TRttiType;
+  rType: TRttiType;
+  value: TValue;
 begin
   FValid := true;
-  rFieldType := field.FieldType;
-  if rFieldType.TypeKind = tkInteger then
+
+  if member is TRttiField then
   begin
-    if field.GetValue(obj).AsInteger > Self.FValue then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
+  if rType.TypeKind = tkInteger then
+  begin
+    if value.AsInteger > Self.FValue then
+    begin
       FValid := false;
+    end;
   end;
 end;
 
@@ -314,18 +390,31 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Pattern.execute(field: TRttiField; obj: TObject): Boolean;
+function Pattern.execute(member: TRttiMember; obj: TObject): Boolean;
 var
-  rFieldType: TRttiType;
+  rType: TRttiType;
   regex: TRegEx;
+  value: TValue;
 begin
   FValid := true;
-  rFieldType := field.FieldType;
-  if rFieldType.TypeKind in [tkString, tkWString, tkUString] then
+
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
+  if rType.TypeKind in [tkString, tkWString, tkUString] then
   begin
     regex := TRegEx.Create(FValue);
-    if not regex.IsMatch(field.GetValue(obj).AsString) then
+    if not regex.IsMatch(value.AsString) then
+    begin
       FValid := false;
+    end;
   end;
 end;
 
@@ -342,10 +431,23 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertTrue.execute(field: TRttiField; obj: TObject): Boolean;
+function AssertTrue.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
 begin
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
   FValid := true;
-  if not field.GetValue(obj).AsBoolean then
+  if not value.AsBoolean then
     FValid := false;
 end;
 
@@ -362,10 +464,23 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function AssertFalse.execute(field: TRttiField; obj: TObject): Boolean;
+function AssertFalse.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
 begin
+  if member is TRttiField then
+  begin
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
   FValid := true;
-  if field.GetValue(obj).AsBoolean then
+  if value.AsBoolean then
     FValid := false;
 end;
 
@@ -412,16 +527,28 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Size.execute(field: TRttiField; obj: TObject): Boolean;
+function Size.execute(member: TRttiMember; obj: TObject): Boolean;
 var
   rFieldType: TRttiType;
   fieldLength: Integer;
+  rType: TRttiType;
+  value: TValue;
 begin
   FValid := true;
-  rFieldType := field.FieldType;
-  if rFieldType.TypeKind in [tkString, tkWString, tkUString] then
+
+  if member is TRttiField then
   begin
-    fieldLength := Length(field.GetValue(obj).AsString);
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+  end;
+
+  if rType.TypeKind in [tkString, tkWString, tkUString] then
+  begin
+    fieldLength := Length(value.AsString);
 
     if FMax = 0 then
     begin
@@ -470,12 +597,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Future.execute(field: TRttiField; obj: TObject): Boolean;
+function Future.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
 begin
   FValid := true;
-  if (field.FieldType.Name = 'TDate') or (field.FieldType.Name = 'TDateTime') then
+
+  if member is TRttiField then
   begin
-    if field.GetValue(obj).AsType<TDate> <= Date then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
+  begin
+    if value.AsType<TDate> <= Date then
       FValid := false;
   end;
 end;
@@ -493,12 +637,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Past.execute(field: TRttiField; obj: TObject): Boolean;
+function Past.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
 begin
   FValid := true;
-  if (field.FieldType.Name = 'TDate') or (field.FieldType.Name = 'TDateTime') then
+
+  if member is TRttiField then
   begin
-    if field.GetValue(obj).AsType<TDate> >= Date then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
+  begin
+    if value.AsType<TDate> >= Date then
       FValid := false;
   end;
 end;
@@ -515,13 +676,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function NotNull.execute(field: TRttiField; obj: TObject): Boolean;
+function NotNull.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
 begin
   FValid := true;
 
-  if field.FieldType.TypeKind = tkClass then
+  if member is TRttiField then
   begin
-    if field.GetValue(obj).AsObject = nil then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if rType.TypeKind = tkClass then
+  begin
+    if value.AsObject = nil then
     begin
       FValid := false;
     end;
@@ -541,13 +718,29 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-function Null.execute(field: TRttiField; obj: TObject): Boolean;
+function Null.execute(member: TRttiMember; obj: TObject): Boolean;
+var
+  rType: TRttiType;
+  value: TValue;
+  rTypeName: string;
 begin
   FValid := true;
 
-  if field.FieldType.TypeKind = tkClass then
+  if member is TRttiField then
   begin
-    if not (field.GetValue(obj).AsObject = nil) then
+    rType := TRttiField(member).FieldType;
+    value := TRttiField(member).GetValue(obj);
+    rTypeName := TRttiField(member).FieldType.Name;
+  end else if member is TRttiProperty then
+  begin
+    rType := TRttiProperty(member).PropertyType;
+    value := TRttiProperty(member).GetValue(obj);
+    rTypeName := TRttiProperty(member).PropertyType.Name;
+  end;
+
+  if rType.TypeKind = tkClass then
+  begin
+    if not (value.AsObject = nil) then
     begin
       FValid := false;
     end;

@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{7CB7FFD3-135D-472F-ADBD-1AC5748D26A4}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="PrjValidation.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="Tests\TestPrjValidation.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="PrjValidation">
+        <MSBuild Projects="PrjValidation.dproj"/>
+    </Target>
+    <Target Name="PrjValidation:Clean">
+        <MSBuild Projects="PrjValidation.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="PrjValidation:Make">
+        <MSBuild Projects="PrjValidation.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="TestPrjValidation">
+        <MSBuild Projects="Tests\TestPrjValidation.dproj"/>
+    </Target>
+    <Target Name="TestPrjValidation:Clean">
+        <MSBuild Projects="Tests\TestPrjValidation.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="TestPrjValidation:Make">
+        <MSBuild Projects="Tests\TestPrjValidation.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="PrjValidation;TestPrjValidation"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="PrjValidation:Clean;TestPrjValidation:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="PrjValidation:Make;TestPrjValidation:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
