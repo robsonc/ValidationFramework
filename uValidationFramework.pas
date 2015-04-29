@@ -9,6 +9,7 @@ type
   TValidationAttribute = class;
   IValidator = interface;
   TValidator = class;
+  TValidationViewHelper = class;
 
   Required = class;
   Min = class;
@@ -190,6 +191,27 @@ type
     function getFirstErrorMessage(memberId: String): String;
     function hasErrorMessages(memberId: String): Boolean;
     procedure clear();
+  end;
+
+  IValidationViewHelper = interface
+  ['{AF90779E-D4A8-4729-8008-9D51255B6E4A}']
+    function showValidationFor(fieldName: String): TValidationViewHelper;
+    procedure withLabel(fieldLabel: String);
+    function result(): String;
+  end;
+
+  TValidationViewHelper = class(TInterfacedObject, IValidationViewHelper)
+  strict private
+    FCurrentField: String;
+    FMessages: TDictionary<String, String>;
+    FValidator: IValidator;
+    FStringBuilder: TStringBuilder;
+  public
+    constructor Create(validator: IValidator);
+    destructor Destroy; override;
+    function showValidationFor(fieldName: String): TValidationViewHelper;
+    procedure withLabel(fieldLabel: String);
+    function result(): String;
   end;
 
 implementation
@@ -543,6 +565,7 @@ end;
 
 constructor Size.Create(min: Integer);
 begin
+  FErrorMessage := 'Tamanho inválido.';
   FMin := min;
 end;
 
@@ -700,6 +723,47 @@ begin
       FValid := False;
     end;
   end;
+end;
+
+{ TValidationViewHelper }
+
+constructor TValidationViewHelper.Create(validator: IValidator);
+begin
+  FMessages := TDictionary<String, String>.Create;
+  FValidator := validator;
+  FStringBuilder := TStringBuilder.Create;
+end;
+
+destructor TValidationViewHelper.Destroy;
+begin
+  FMessages.Free;
+  FStringBuilder.Free;
+  inherited;
+end;
+
+function TValidationViewHelper.showValidationFor(fieldName: String): TValidationViewHelper;
+begin
+  FCurrentField := fieldName;
+  FMessages.Add(fieldName, String.Empty);
+  result := Self;
+end;
+
+procedure TValidationViewHelper.withLabel(fieldLabel: String);
+begin
+  FMessages.Items[FCurrentField] := fieldLabel;
+end;
+
+function TValidationViewHelper.result(): String;
+var
+  key: String;
+begin
+  for key in FMessages.Keys do
+  begin
+    if FValidator.hasErrorMessages(key) then
+      FStringBuilder.AppendLine(FMessages.Items[key] + ': ' + FValidator.getFirstErrorMessage(key));
+  end;
+
+  Result := FStringBuilder.ToString;
 end;
 
 end.
