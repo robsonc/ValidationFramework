@@ -52,7 +52,7 @@ type
     procedure SetTelefone(const Value: TTelefone);
     procedure SetValor(const Value: Double);
   public
-    [Min(10.00)]
+    //[Min(10.00)]
     property Valor: Double read FValor write SetValor;
     //[Required('Este campo é obrigatório e não pode estar vazio.')]
     //[Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
@@ -63,6 +63,7 @@ type
     [Max(50, 'Idade acima da idade máxima de 50 anos.')]
     property idade: Integer read Fidade write Setidade;
     [Required]
+    [Min(1)]
     [Max(3, 'Número de filhos excede o limite de 3 filhos.')]
     property Filhos: Integer read FFilhos write SetFilhos;
     [AssertTrue('É obrigatório estar casado(a).')]

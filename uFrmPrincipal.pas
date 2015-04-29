@@ -36,7 +36,8 @@ type
   private
     procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel; controle: TObject);
     procedure initControls;
-    procedure exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>);
+    procedure exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>); overload;
+    procedure exibeErros(validator: IValidator); overload;
     { Private declarations }
   public
     { Public declarations }
@@ -80,7 +81,8 @@ begin
     if not validator.validate(cliente) then
     begin
       errorMessages := validator.getErrorMessages();
-      exibeErros(errorMessages);
+      //exibeErros(errorMessages);
+      exibeErros(validator);
     end else
     begin
       ShowMessage('Cliente salvo com sucesso!');
@@ -88,6 +90,29 @@ begin
   finally
     cliente.Free;
   end;
+end;
+
+procedure TForm1.exibeErros(validator: IValidator);
+var
+  showErrorMessage: TProc<String>;
+begin
+  showErrorMessage := procedure(mensagem: String)
+  begin
+    Application.MessageBox(PChar(mensagem), 'Atenção', MB_ICONERROR);
+  end;
+
+  if validator.hasErrorMessages('TAssociado.Nome') then
+    showErrorMessage('Campo Nome: ' + validator.getFirstErrorMessage('TAssociado.Nome'));
+  if validator.hasErrorMessages('TAssociado.idade') then
+    showErrorMessage('Campo Idade: ' + validator.getFirstErrorMessage('TAssociado.idade'));
+  if validator.hasErrorMessages('TAssociado.Filhos') then
+    showErrorMessage('Campo Filhos: ' + validator.getFirstErrorMessage('TAssociado.Filhos'));
+  if validator.hasErrorMessages('TAssociado.isCasado') then
+    showErrorMessage('Campo Casado: ' + validator.getFirstErrorMessage('TAssociado.isCasado'));
+  if validator.hasErrorMessages('TAssociado.Email') then
+    showErrorMessage('Campo Email: ' + validator.getFirstErrorMessage('TAssociado.Email'));
+  if validator.hasErrorMessages('TTelefone.Numero') then
+    showErrorMessage('Campo Telefone: ' + validator.getFirstErrorMessage('TTelefone.Numero'));
 end;
 
 procedure TForm1.FormCreate(Sender: TObject);
@@ -112,9 +137,9 @@ begin
 
     TControl(controle).Hint := msg.Messages[0];
     TControl(controle).ShowHint := True;
-//
-//    errorLabel.Caption := msg.Messages[0];
-//    errorLabel.Visible := true;
+
+    errorLabel.Caption := msg.Messages[0];
+    errorLabel.Visible := true;
   end;
 end;
 
@@ -129,6 +154,7 @@ begin
       TEdit(Self.Controls[i]).Color := clWindow;
     end;
   end;
+
   lbErrorMessage.Visible := false;
   lbIdadeError.Visible := false;
   lbFilhosError.Visible := false;

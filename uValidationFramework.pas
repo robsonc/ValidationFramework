@@ -6,10 +6,10 @@ uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions, System.Math, System.Types;
 
 type
+  TErrorMessage = class;
   TValidationAttribute = class;
   IValidator = interface;
   TValidator = class;
-  TErrorMessage = class;
 
   Required = class;
   Min = class;
@@ -186,6 +186,8 @@ type
   ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
     function validate(obj: TObject): Boolean;
     function getErrorMessages(): TList<TErrorMessage>;
+    function getFirstErrorMessage(memberId: String): String;
+    function hasErrorMessages(memberId: String): Boolean;
     procedure clear();
   end;
 
@@ -201,6 +203,8 @@ type
     destructor Destroy; override;
     function validate(obj: TObject): Boolean;
     function getErrorMessages(): TList<TErrorMessage>;
+    function getFirstErrorMessage(memberId: String): String;
+    function hasErrorMessages(memberId: String): Boolean;
     procedure clear();
   end;
 
@@ -252,6 +256,33 @@ end;
 function TValidator.getErrorMessages: TList<TErrorMessage>;
 begin
   Result := FListConstraintViolations;
+end;
+
+function TValidator.getFirstErrorMessage(memberId: String): String;
+var
+  errorMessage: TErrorMessage;
+begin
+  for errorMessage in FListConstraintViolations do
+  begin
+    if (errorMessage.FieldName = memberId) then
+    begin
+      Result := errorMessage.Messages[0];
+    end;
+  end;
+end;
+
+function TValidator.hasErrorMessages(memberId: String): Boolean;
+var
+  errorMessage: TErrorMessage;
+begin
+  Result := False;
+  for errorMessage in FListConstraintViolations do
+  begin
+    if (errorMessage.FieldName = memberId) then
+    begin
+      Result := True;
+    end;
+  end;
 end;
 
 function TValidator.validate(obj: TObject): Boolean;
