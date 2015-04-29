@@ -34,7 +34,9 @@ type
     procedure btnSalvarClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
+    procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel; controle: TObject);
+    procedure initControls;
+    procedure exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>);
     { Private declarations }
   public
     { Public declarations }
@@ -50,18 +52,11 @@ implementation
 procedure TForm1.btnSalvarClick(Sender: TObject);
 var
   cliente: TCliente;
-  msg: TErrorMessage;
   validator: IValidator;
   telefone: TTelefone;
   errorMessages: TList<TErrorMessage>;
-  mensagem: String;
 begin
-  lbErrorMessage.Visible := false;
-  lbIdadeError.Visible := false;
-  lbFilhosError.Visible := false;
-  lbCasadoError.Visible := false;
-  lbEmailError.Visible := false;
-  lblTelefoneError.Visible := False;
+  initControls();
 
   validator := TValidator.Create;
 
@@ -85,23 +80,7 @@ begin
     if not validator.validate(cliente) then
     begin
       errorMessages := validator.getErrorMessages();
-      for msg in errorMessages do
-      begin
-        showErrorMessage('TCliente.Nome', msg, lbErrorMessage);
-        showErrorMessage('TCliente.idade', msg, lbIdadeError);
-        showErrorMessage('TCliente.Filhos', msg, lbFilhosError);
-        showErrorMessage('TCliente.isCasado', msg, lbCasadoError);
-        showErrorMessage('TCliente.Email', msg, lbEmailError);
-        showErrorMessage('TCliente.Telefone', msg, lblTelefoneError);
-        showErrorMessage('TTelefone.Numero', msg, lblTelefoneError);
-
-        Memo1.Lines.Append(msg.FieldName);
-        for mensagem in msg.Messages do
-        begin
-          Memo1.Lines.Append('-----> ' + mensagem);
-        end;
-      end;
-
+      exibeErros(errorMessages);
       validator.clear();
     end else
     begin
@@ -118,14 +97,66 @@ begin
   editFilhos.Text := '0';
 end;
 
-procedure TForm1.showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel);
+procedure TForm1.showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel; controle: TObject);
 begin
   if msg.FieldName = field then
   begin
-    errorLabel.Caption := msg.Messages[0];
-    errorLabel.Visible := true;
-    errorLabel.Hint := msg.Messages[0];
-    errorLabel.ShowHint := True;
+    if controle is TEdit then
+    begin
+      TEdit(controle).Color := RGB(250, 157, 162);
+    end;
+
+    if controle is TCheckBox then
+    begin
+      TCheckBox(controle).Font.Color := RGB(250, 157, 162);
+    end;
+
+    TControl(controle).Hint := msg.Messages[0];
+    TControl(controle).ShowHint := True;
+//
+//    errorLabel.Caption := msg.Messages[0];
+//    errorLabel.Visible := true;
+  end;
+end;
+
+procedure TForm1.initControls;
+var
+  i: Integer;
+begin
+  for i := 0 to Self.ControlCount - 1 do
+  begin
+    if Self.Controls[i] is TEdit then
+    begin
+      TEdit(Self.Controls[i]).Color := clWindow;
+    end;
+  end;
+  lbErrorMessage.Visible := false;
+  lbIdadeError.Visible := false;
+  lbFilhosError.Visible := false;
+  lbCasadoError.Visible := false;
+  lbEmailError.Visible := false;
+  lblTelefoneError.Visible := False;
+end;
+
+procedure TForm1.exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>);
+var
+  msg: TErrorMessage;
+  mensagem: string;
+begin
+  for msg in errorMessages do
+  begin
+    showErrorMessage('TCliente.Nome', msg, lbErrorMessage, editNome);
+    showErrorMessage('TCliente.idade', msg, lbIdadeError, editIdade);
+    showErrorMessage('TCliente.Filhos', msg, lbFilhosError, editFilhos);
+    showErrorMessage('TCliente.isCasado', msg, lbCasadoError, ckCasado);
+    showErrorMessage('TCliente.Email', msg, lbEmailError, editEmail);
+    showErrorMessage('TCliente.Telefone', msg, lblTelefoneError, editTelefone);
+    showErrorMessage('TTelefone.Numero', msg, lblTelefoneError, editTelefone);
+    Memo1.Lines.Append(msg.FieldName);
+    for mensagem in msg.Messages do
+    begin
+      Memo1.Lines.Append('-----> ' + mensagem);
+    end;
   end;
 end;
 

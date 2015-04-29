@@ -190,6 +190,7 @@ object Form1: TForm1
     Width = 75
     Height = 25
     Caption = 'Salvar'
+    Default = True
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -11
