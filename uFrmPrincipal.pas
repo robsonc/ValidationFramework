@@ -60,7 +60,7 @@ begin
 
   validator := TValidator.Create;
 
-  cliente := TCliente.Create;
+  cliente := TAssociado.Create;
   try
     cliente.Nome := editNome.Text;
     cliente.idade := StrToInt(editIdade.Text);
@@ -81,7 +81,6 @@ begin
     begin
       errorMessages := validator.getErrorMessages();
       exibeErros(errorMessages);
-      validator.clear();
     end else
     begin
       ShowMessage('Cliente salvo com sucesso!');
@@ -145,12 +144,12 @@ var
 begin
   for msg in errorMessages do
   begin
-    showErrorMessage('TCliente.Nome', msg, lbErrorMessage, editNome);
-    showErrorMessage('TCliente.idade', msg, lbIdadeError, editIdade);
-    showErrorMessage('TCliente.Filhos', msg, lbFilhosError, editFilhos);
-    showErrorMessage('TCliente.isCasado', msg, lbCasadoError, ckCasado);
-    showErrorMessage('TCliente.Email', msg, lbEmailError, editEmail);
-    showErrorMessage('TCliente.Telefone', msg, lblTelefoneError, editTelefone);
+    showErrorMessage('TAssociado.Nome', msg, lbErrorMessage, editNome);
+    showErrorMessage('TAssociado.idade', msg, lbIdadeError, editIdade);
+    showErrorMessage('TAssociado.Filhos', msg, lbFilhosError, editFilhos);
+    showErrorMessage('TAssociado.isCasado', msg, lbCasadoError, ckCasado);
+    showErrorMessage('TAssociado.Email', msg, lbEmailError, editEmail);
+    showErrorMessage('TAssociado.Telefone', msg, lblTelefoneError, editTelefone);
     showErrorMessage('TTelefone.Numero', msg, lblTelefoneError, editTelefone);
     Memo1.Lines.Append(msg.FieldName);
     for mensagem in msg.Messages do

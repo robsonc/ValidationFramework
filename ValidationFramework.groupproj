@@ -6,9 +6,6 @@
         <Projects Include="PrjValidation.dproj">
             <Dependencies/>
         </Projects>
-        <Projects Include="Tests\TestPrjValidation.dproj">
-            <Dependencies/>
-        </Projects>
     </ItemGroup>
     <ProjectExtensions>
         <Borland.Personality>Default.Personality.12</Borland.Personality>
@@ -26,23 +23,14 @@
     <Target Name="PrjValidation:Make">
         <MSBuild Projects="PrjValidation.dproj" Targets="Make"/>
     </Target>
-    <Target Name="TestPrjValidation">
-        <MSBuild Projects="Tests\TestPrjValidation.dproj"/>
-    </Target>
-    <Target Name="TestPrjValidation:Clean">
-        <MSBuild Projects="Tests\TestPrjValidation.dproj" Targets="Clean"/>
-    </Target>
-    <Target Name="TestPrjValidation:Make">
-        <MSBuild Projects="Tests\TestPrjValidation.dproj" Targets="Make"/>
-    </Target>
     <Target Name="Build">
-        <CallTarget Targets="PrjValidation;TestPrjValidation"/>
+        <CallTarget Targets="PrjValidation"/>
     </Target>
     <Target Name="Clean">
-        <CallTarget Targets="PrjValidation:Clean;TestPrjValidation:Clean"/>
+        <CallTarget Targets="PrjValidation:Clean"/>
     </Target>
     <Target Name="Make">
-        <CallTarget Targets="PrjValidation:Make;TestPrjValidation:Make"/>
+        <CallTarget Targets="PrjValidation:Make"/>
     </Target>
     <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
 </Project>

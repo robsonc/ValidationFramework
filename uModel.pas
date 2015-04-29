@@ -55,7 +55,6 @@ type
     [Min(10.00)]
     property Valor: Double read FValor write SetValor;
     //[Required('Este campo é obrigatório e não pode estar vazio.')]
-    [NotBlank]
     //[Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
     [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
     //[Size]
@@ -76,6 +75,12 @@ type
     [Valid]
     property Telefone: TTelefone read FTelefone write SetTelefone;
     destructor Destroy; override;
+  end;
+
+  TAssociado = class(TCliente)
+  public
+    [NotBlank]
+    property Nome: String read FNome write SetNome;
   end;
 
 implementation

@@ -6,9 +6,24 @@ uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions, System.Math, System.Types;
 
 type
+  TValidationAttribute = class;
   IValidator = interface;
   TValidator = class;
   TErrorMessage = class;
+
+  Required = class;
+  Min = class;
+  Max = class;
+  Pattern = class;
+  AssertTrue = class;
+  AssertFalse = class;
+  Size = class;
+  Future = class;
+  Past = class;
+  NotNull = class;
+  Null = class;
+  Valid = class;
+  NotBlank = class;
 
   TValidationAttribute = class abstract(TCustomAttribute)
   protected
@@ -115,6 +130,7 @@ type
 
   NotNull = class(TValidationAttribute)
   public
+    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
@@ -122,6 +138,7 @@ type
 
   Null = class(TValidationAttribute)
   public
+    constructor Create; overload;
     constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
@@ -143,6 +160,14 @@ type
   //digits
   //DecimalMin
   //DecimalMax
+  //NotEmpty
+  //Range
+  //Length
+  //URL
+  //CreditCardNumber
+  //EAN13
+  //CPF
+  //CNPJ
 
   TErrorMessage = class
   private
@@ -641,6 +666,11 @@ begin
   FErrorMessage := errorMessage;
 end;
 
+constructor NotNull.Create;
+begin
+  FErrorMessage := 'Objeto não pode ser nulo.';
+end;
+
 procedure NotNull.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
@@ -658,6 +688,11 @@ end;
 constructor Null.Create(errorMessage: String);
 begin
   FErrorMessage := errorMessage;
+end;
+
+constructor Null.Create;
+begin
+  FErrorMessage := 'Objeto deve ser nulo.';
 end;
 
 procedure Null.doValidation(rType: TRttiType; rTypeName: String; value: TValue;

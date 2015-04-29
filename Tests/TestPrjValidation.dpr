@@ -12,7 +12,8 @@ uses
   DUnitX.Loggers.Console,
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
-  uTestAttributes in 'uTestAttributes.pas';
+  uTestAttributes in 'uTestAttributes.pas',
+  uValidationFramework in '..\uValidationFramework.pas';
 
 var
   runner : ITestRunner;
