@@ -124,7 +124,8 @@ begin
 
   isValid := FValidator.validate(blankObj);
 
-  Assert.AreEqual('Não pode estar em branco.', FValidator.getErrorMessages()[0].Messages[0]);
+  Assert.AreEqual('Não pode estar em branco.', FValidator
+    .getFirstErrorMessage('TNotBlankClass.blankString'));
   Assert.IsFalse(isValid);
 end;
 
@@ -137,7 +138,8 @@ begin
 
   isValid := FValidator.validate(blankObj);
 
-  Assert.AreEqual('Não pode estar em branco.', FValidator.getErrorMessages()[0].Messages[0]);
+  Assert.AreEqual('Não pode estar em branco.', FValidator
+    .getFirstErrorMessage('TNotBlankClass.blankString'));
   Assert.IsFalse(isValid);
 end;
 
@@ -183,7 +185,8 @@ begin
   notNullObj := TNotNullClass.Create;
   isValid := FValidator.validate(notNullObj);
 
-  Assert.AreEqual('Objeto não pode ser nulo.', FValidator.getErrorMessages()[0].Messages[0]);
+  Assert.AreEqual('Objeto não pode ser nulo.', FValidator
+    .getFirstErrorMessage('TNotNullClass.obj'));
   Assert.IsFalse(isValid);
 end;
 
@@ -203,7 +206,8 @@ begin
   nullObj.obj := TObject.Create;
   isValid := FValidator.validate(nullObj);
 
-  Assert.AreEqual('Objeto deve ser nulo.', FValidator.getErrorMessages()[0].Messages[0]);
+  Assert.AreEqual('Objeto deve ser nulo.', FValidator
+    .getFirstErrorMessage('TNullClass.obj'));
   Assert.IsFalse(isValid);
 end;
 

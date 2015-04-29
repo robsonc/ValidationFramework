@@ -6,7 +6,6 @@ uses System.Rtti, System.TypInfo, System.SysUtils,
   System.Generics.Collections, RegularExpressions, System.Math, System.Types;
 
 type
-  TErrorMessage = class;
   TValidationAttribute = class;
   IValidator = interface;
   TValidator = class;
@@ -169,23 +168,10 @@ type
   //CPF
   //CNPJ
 
-  TErrorMessage = class
-  private
-    FFieldName: String;
-    FMessages: TList<String>;
-    procedure SetFieldName(const Value: String);
-    procedure SetMessages(const Value: TList<String>);
-  public
-    constructor Create;
-    destructor Destroy; override;
-    property FieldName: String read FFieldName write SetFieldName;
-    property Messages: TList<String> read FMessages write SetMessages;
-  end;
-
   IValidator = interface(IInvokable)
   ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
     function validate(obj: TObject): Boolean;
-    function getErrorMessages(): TList<TErrorMessage>;
+    function getErrorMessages(): TObjectDictionary<string, TList<string>>;
     function getFirstErrorMessage(memberId: String): String;
     function hasErrorMessages(memberId: String): Boolean;
     procedure clear();
@@ -194,15 +180,13 @@ type
   TValidator = class(TInterfacedObject, IValidator)
   private
     FValidatedObjects: TDictionary<Integer, TObject>;
-    FListConstraintViolations: TList<TErrorMessage>;
-    procedure executeValidation(member: TRttiMember;
-      errorMessage: TErrorMessage; obj: TObject);
-    procedure addErrorMessages(errorMessage: TErrorMessage);
+    FListConstraintViolations: TObjectDictionary<string, TList<string>>;
+    procedure doValidation(member: TRttiMember; obj: TObject; memberId: String);
   public
     constructor Create;
     destructor Destroy; override;
     function validate(obj: TObject): Boolean;
-    function getErrorMessages(): TList<TErrorMessage>;
+    function getErrorMessages(): TObjectDictionary<string, TList<string>>;
     function getFirstErrorMessage(memberId: String): String;
     function hasErrorMessages(memberId: String): Boolean;
     procedure clear();
@@ -210,30 +194,29 @@ type
 
 implementation
 
-{ TErrorMessage }
-
-constructor TErrorMessage.Create;
-begin
-  FMessages := TList<String>.Create;
-end;
-
-destructor TErrorMessage.Destroy;
-begin
-  FMessages.Free;
-  inherited;
-end;
-
-procedure TErrorMessage.SetFieldName(const Value: String);
-begin
-  FFieldName := Value;
-end;
-
-procedure TErrorMessage.SetMessages(const Value: TList<String>);
-begin
-  FMessages := Value;
-end;
-
 { TValidation }
+
+procedure TValidator.doValidation(member: TRttiMember; obj: TObject; memberId: String);
+var
+  rAttr: TCustomAttribute;
+begin
+  for rAttr in member.GetAttributes do
+  begin
+    if rAttr is TValidationAttribute then
+    begin
+      with TValidationAttribute(rAttr) do
+      begin
+        execute(member, obj, Self);
+        if not isValid() then
+        begin
+          if not FListConstraintViolations.ContainsKey(memberId) then
+            FListConstraintViolations.Add(memberId, TList<String>.Create);
+          FListConstraintViolations.Items[memberId].Add(getErrorMessage());
+        end;
+      end;
+    end;
+  end;
+end;
 
 procedure TValidator.clear;
 begin
@@ -243,7 +226,7 @@ end;
 constructor TValidator.Create;
 begin
   FValidatedObjects := TDictionary<Integer, TObject>.Create;
-  FListConstraintViolations := TObjectList<TErrorMessage>.Create;
+  FListConstraintViolations := TObjectDictionary<string, TList<string>>.Create([doOwnsValues]);
 end;
 
 destructor TValidator.Destroy;
@@ -253,36 +236,22 @@ begin
   inherited;
 end;
 
-function TValidator.getErrorMessages: TList<TErrorMessage>;
+function TValidator.getErrorMessages: TObjectDictionary<string, TList<string>>;
 begin
   Result := FListConstraintViolations;
 end;
 
 function TValidator.getFirstErrorMessage(memberId: String): String;
-var
-  errorMessage: TErrorMessage;
 begin
-  for errorMessage in FListConstraintViolations do
-  begin
-    if (errorMessage.FieldName = memberId) then
-    begin
-      Result := errorMessage.Messages[0];
-    end;
-  end;
+  if FListConstraintViolations.ContainsKey(memberId) then
+    Result := FListConstraintViolations.Items[memberId][0];
 end;
 
 function TValidator.hasErrorMessages(memberId: String): Boolean;
-var
-  errorMessage: TErrorMessage;
 begin
   Result := False;
-  for errorMessage in FListConstraintViolations do
-  begin
-    if (errorMessage.FieldName = memberId) then
-    begin
-      Result := True;
-    end;
-  end;
+  if FListConstraintViolations.ContainsKey(memberId) then
+    Result := True;
 end;
 
 function TValidator.validate(obj: TObject): Boolean;
@@ -292,9 +261,9 @@ var
   rField: TRttiField;
   rAttr: TCustomAttribute;
   rProperty: TRttiProperty;
-  errorMessage: TErrorMessage;
   rMember: TRttiMember;
   rParameter: TRttiParameter;
+  memberId: String;
 begin
   if obj = nil then
   begin
@@ -310,61 +279,22 @@ begin
   end;
 
   Result := true;
-
   rType := context.GetType(obj.ClassInfo);
 
   for rField in rType.GetFields do
   begin
-    errorMessage := TErrorMessage.Create;
-    errorMessage.FieldName := rField.Name;
-
-    executeValidation(rField, errorMessage, obj);
-    addErrorMessages(errorMessage);
+    memberId := rType.Name + '.' + rField.Name;
+    Self.doValidation(rField, obj, memberId);
   end;
 
- for rProperty in rType.GetProperties do
+  for rProperty in rType.GetProperties do
   begin
-    errorMessage := TErrorMessage.Create;
-    errorMessage.FieldName := rType.Name + '.' + rProperty.Name;
-
-    executeValidation(rProperty, errorMessage, obj);
-    addErrorMessages(errorMessage);
+    memberId := rType.Name + '.' + rProperty.Name;
+    Self.doValidation(rProperty, obj, memberId);
   end;
 
   if FListConstraintViolations.Count > 0 then
     Result := false;
-end;
-
-procedure TValidator.executeValidation(member: TRttiMember;
-  errorMessage: TErrorMessage; obj: TObject);
-var
-  rAttr: TCustomAttribute;
-begin
-  for rAttr in member.GetAttributes do
-  begin
-    if rAttr is TValidationAttribute then
-    begin
-      with TValidationAttribute(rAttr) do
-      begin
-        execute(member, obj, Self);
-        if not isValid() then
-        begin
-          errorMessage.Messages.Add(getErrorMessage());
-        end;
-      end;
-    end;
-  end;
-end;
-
-procedure TValidator.addErrorMessages(errorMessage: TErrorMessage);
-begin
-  if errorMessage.Messages.Count > 0 then
-  begin
-    FListConstraintViolations.Add(errorMessage);
-  end else
-  begin
-    errorMessage.Free;
-  end;
 end;
 
 { Required }

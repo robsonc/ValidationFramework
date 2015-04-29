@@ -34,9 +34,7 @@ type
     procedure btnSalvarClick(Sender: TObject);
     procedure FormCreate(Sender: TObject);
   private
-    procedure showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel; controle: TObject);
     procedure initControls;
-    procedure exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>); overload;
     procedure exibeErros(validator: IValidator); overload;
     { Private declarations }
   public
@@ -55,7 +53,6 @@ var
   cliente: TCliente;
   validator: IValidator;
   telefone: TTelefone;
-  errorMessages: TList<TErrorMessage>;
 begin
   initControls();
 
@@ -80,8 +77,6 @@ begin
     Memo1.Lines.Clear;
     if not validator.validate(cliente) then
     begin
-      errorMessages := validator.getErrorMessages();
-      //exibeErros(errorMessages);
       exibeErros(validator);
     end else
     begin
@@ -121,28 +116,6 @@ begin
   editFilhos.Text := '0';
 end;
 
-procedure TForm1.showErrorMessage(field: String; msg: TErrorMessage; errorLabel: TLabel; controle: TObject);
-begin
-  if msg.FieldName = field then
-  begin
-    if controle is TEdit then
-    begin
-      TEdit(controle).Color := RGB(250, 157, 162);
-    end;
-
-    if controle is TCheckBox then
-    begin
-      TCheckBox(controle).Font.Color := RGB(250, 157, 162);
-    end;
-
-    TControl(controle).Hint := msg.Messages[0];
-    TControl(controle).ShowHint := True;
-
-    errorLabel.Caption := msg.Messages[0];
-    errorLabel.Visible := true;
-  end;
-end;
-
 procedure TForm1.initControls;
 var
   i: Integer;
@@ -161,28 +134,6 @@ begin
   lbCasadoError.Visible := false;
   lbEmailError.Visible := false;
   lblTelefoneError.Visible := False;
-end;
-
-procedure TForm1.exibeErros(errorMessages: System.Generics.Collections.TList<TErrorMessage>);
-var
-  msg: TErrorMessage;
-  mensagem: string;
-begin
-  for msg in errorMessages do
-  begin
-    showErrorMessage('TAssociado.Nome', msg, lbErrorMessage, editNome);
-    showErrorMessage('TAssociado.idade', msg, lbIdadeError, editIdade);
-    showErrorMessage('TAssociado.Filhos', msg, lbFilhosError, editFilhos);
-    showErrorMessage('TAssociado.isCasado', msg, lbCasadoError, ckCasado);
-    showErrorMessage('TAssociado.Email', msg, lbEmailError, editEmail);
-    showErrorMessage('TAssociado.Telefone', msg, lblTelefoneError, editTelefone);
-    showErrorMessage('TTelefone.Numero', msg, lblTelefoneError, editTelefone);
-    Memo1.Lines.Append(msg.FieldName);
-    for mensagem in msg.Messages do
-    begin
-      Memo1.Lines.Append('-----> ' + mensagem);
-    end;
-  end;
 end;
 
 end.
