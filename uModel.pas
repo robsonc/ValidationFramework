@@ -2,18 +2,9 @@ unit uModel;
 
 interface
 
-uses uValidationFramework, System.Rtti, RegularExpressions, System.TypInfo;
+uses uValidation.Framework.Attributes, System.Rtti, RegularExpressions, System.TypInfo;
 
 type
-  ValidEmail = class(TValidationAttribute)
-  public
-    //^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
-    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
-      validator: IValidator); override;
-  end;
-
   TCliente = class;
   TTelefone = class;
 
@@ -70,7 +61,7 @@ type
     property isCasado: Boolean read FisCasado write SetisCasado;
     //[Past('Data precisa ser no passado.')]
     property dataAtual: TDate read FdataAtual write SetdataAtual;
-    [ValidEmail('E-mail inválido.')]
+    //[ValidEmail('E-mail inválido.')]
     property Email: String read FEmail write SetEmail;
     [NotNull('Telefone não pode ser nulo.')]
     [Valid]
@@ -136,32 +127,6 @@ end;
 procedure TCliente.SetValor(const Value: Double);
 begin
   FValor := Value;
-end;
-
-{ ValidEmail }
-
-constructor ValidEmail.Create;
-begin
-
-end;
-
-constructor ValidEmail.Create(errorMessage: String);
-begin
-  Self.Create;
-  FErrorMessage := errorMessage;
-end;
-
-procedure ValidEmail.doValidation(rType: TRttiType; rTypeName: String;
-  value: TValue; validator: IValidator);
-var
-  regex: TRegEx;
-begin
-  if rType.TypeKind in [tkString, tkWString, tkUString] then
-  begin
-    regex := TRegEx.Create('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$');
-    if not regex.IsMatch(value.AsString) then
-      FValid := false;
-  end;
 end;
 
 { TTelefone }

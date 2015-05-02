@@ -3,29 +3,16 @@ unit uValidationFramework;
 interface
 
 uses System.Rtti, System.TypInfo, System.SysUtils,
-  System.Generics.Collections, RegularExpressions, System.Math, System.Types;
+  System.Generics.Collections, RegularExpressions, System.Math, System.Types,
+  uValidation.Framework.Attributes;
 
 type
-  TValidationAttribute = class;
   IValidator = interface;
+  TValidationAttribute = class;
   TValidator = class;
   TValidationViewHelper = class;
 
-  Required = class;
-  Min = class;
-  Max = class;
-  Pattern = class;
-  AssertTrue = class;
-  AssertFalse = class;
-  Size = class;
-  Future = class;
-  Past = class;
-  NotNull = class;
-  Null = class;
-  Valid = class;
-  NotBlank = class;
-
-  TValidationAttribute = class abstract(TCustomAttribute)
+  TValidationAttribute = class abstract
   protected
     FValid: Boolean;
     FErrorMessage: String;
@@ -35,139 +22,117 @@ type
     function execute(member: TRttiMember; obj: TObject; validator: TValidator): Boolean;
     function isValid(): Boolean;
     function getErrorMessage(): String;
+    procedure visit(vAttribute: ValidationAttribute); virtual; abstract;
   end;
 
-  Required = class(TValidationAttribute)
+  TRequired = class(TValidationAttribute)
   public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  Min = class(TValidationAttribute)
-  private
+  TMin = class(TValidationAttribute)
+  strict private
     FValueDouble: Double;
     FValue: Integer;
   public
-    constructor Create(value: Double); overload;
-    constructor Create(value: Integer); overload;
-    constructor Create(value: Integer; errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
-    property Value: Integer read FValue write FValue;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  Max = class(TValidationAttribute)
-  private
+  TMax = class(TValidationAttribute)
+  strict private
     FValueDouble: Double;
     FValue: Integer;
   public
-    constructor Create(value: Double); overload;
-    constructor Create(value: Integer); overload;
-    constructor Create(value: Integer; errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
-    property Value: Integer read FValue write FValue;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  Pattern = class(TValidationAttribute)
-  private
+  TPattern = class(TValidationAttribute)
+  strict private
     FValue: String;
   public
-    constructor Create(regex: String); overload;
-    constructor Create(regex: String; errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
-    property Value: String read FValue write FValue;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  AssertTrue = class(TValidationAttribute)
+  TAssertTrue = class(TValidationAttribute)
   public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  AssertFalse = class(TValidationAttribute)
+  TAssertFalse = class(TValidationAttribute)
   public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  Size = class(TValidationAttribute)
-  private
+  TSize = class(TValidationAttribute)
+  strict private
     FMin: Integer;
     FMax: Integer;
   public
-    constructor Create; overload;
-    constructor Create(min: Integer); overload;
-    constructor Create(min: Integer; errorMessage: String); overload;
-    constructor Create(min: Integer; max: Integer); overload;
-    constructor Create(min: Integer; max: Integer; errorMessage: String); overload;
-    property Min: Integer read FMin write FMin;
-    property Max: Integer read FMax write FMax;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  Future = class(TValidationAttribute)
-  public
-    constructor Create(errorMessage: String); overload;
-    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
-      validator: IValidator); override;
-  end;
-
-  Past = class(TValidationAttribute)
-  public
-    constructor Create(errorMessage: String); overload;
-    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
-      validator: IValidator); override;
-  end;
-
-  NotNull = class(TValidationAttribute)
-  public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
-    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
-      validator: IValidator); override;
-  end;
-
-  Null = class(TValidationAttribute)
-  public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
-    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
-      validator: IValidator); override;
-  end;
-
-  Valid = class(TValidationAttribute)
+  TFuture = class(TValidationAttribute)
   public
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  NotBlank = class(TValidationAttribute)
+  TPast = class(TValidationAttribute)
   public
-    constructor Create;
     procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
       validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
   end;
 
-  //digits
-  //DecimalMin
-  //DecimalMax
-  //NotEmpty
-  //Range
-  //Length
-  //URL
-  //CreditCardNumber
-  //EAN13
-  //CPF
-  //CNPJ
+  TNotNull = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
+  end;
+
+  TNull = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
+  end;
+
+  TValid = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
+  end;
+
+  TNotBlank = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
+  end;
+
+  TValidEmail = class(TValidationAttribute)
+  public
+    procedure doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+      validator: IValidator); override;
+    procedure visit(vAttribute: ValidationAttribute); override;
+  end;
 
   IValidator = interface(IInvokable)
   ['{DB120293-9B40-44BF-88BE-816FF0C67EBE}']
@@ -214,6 +179,16 @@ type
     function result(): String;
   end;
 
+  TValidatorManager = class abstract
+  private
+    class var FRegisteredValidators: TObjectDictionary<String, TValidationAttribute>;
+  public
+    class procedure registerValidator(validationAttribute: TClass;
+      validationExecutor: TValidationAttribute); static;
+    class procedure unregisterValidators; static;
+    class function getExecutor(validationAttribute: String): TValidationAttribute; static;
+  end;
+
 implementation
 
 { TValidation }
@@ -221,21 +196,26 @@ implementation
 procedure TValidator.doValidation(member: TRttiMember; obj: TObject; memberId: String);
 var
   rAttr: TCustomAttribute;
+  executor: TValidationAttribute;
+  vAttribute: ValidationAttribute;
 begin
   for rAttr in member.GetAttributes do
   begin
-    if rAttr is TValidationAttribute then
+    if rAttr is ValidationAttribute then
     begin
-      with TValidationAttribute(rAttr) do
+      vAttribute := rAttr as ValidationAttribute;
+
+      executor := TValidatorManager.getExecutor(vAttribute.ClassName);
+      executor.visit(vAttribute);
+      executor.execute(member, obj, Self);
+
+      if not executor.isValid() then
       begin
-        execute(member, obj, Self);
-        if not isValid() then
-        begin
-          if not FListConstraintViolations.ContainsKey(memberId) then
-            FListConstraintViolations.Add(memberId, TList<String>.Create);
-          FListConstraintViolations.Items[memberId].Add(getErrorMessage());
-        end;
+        if not FListConstraintViolations.ContainsKey(memberId) then
+          FListConstraintViolations.Add(memberId, TList<String>.Create);
+        FListConstraintViolations.Items[memberId].Add(vAttribute.ErrorMessage);
       end;
+
     end;
   end;
 end;
@@ -319,20 +299,9 @@ begin
     Result := false;
 end;
 
-{ Required }
+{ TRequired }
 
-constructor Required.Create;
-begin
-  FErrorMessage := 'Campo requerido.';
-end;
-
-constructor Required.Create(errorMessage: String);
-begin
-  Self.Create;
-  FErrorMessage := errorMessage;
-end;
-
-procedure Required.doValidation(rType: TRttiType; rTypeName: String;
+procedure TRequired.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   case rType.TypeKind of
@@ -367,27 +336,20 @@ begin
   end;
 end;
 
-{ Min }
-
-constructor Min.Create(value: Integer);
+procedure TRequired.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := 'Valor mínimo inválido.';
-  FValue := value;
+
 end;
 
-constructor Min.Create(value: Integer; errorMessage: String);
+{ TMin }
+
+procedure TMin.visit(vAttribute: ValidationAttribute);
 begin
-  Self.Create(value);
-  FErrorMessage := errorMessage;
+  FValue := Min(vAttribute).Value;
+  FValueDouble := Min(vAttribute).ValueDouble;
 end;
 
-constructor Min.Create(value: Double);
-begin
-  FErrorMessage := 'Valor não pode ser menor especificado';
-  FValueDouble := value;
-end;
-
-procedure Min.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TMin.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
   if rType.TypeKind = tkInteger then
@@ -407,27 +369,15 @@ begin
   end;
 end;
 
-{ Max }
+{ TMax }
 
-constructor Max.Create(value: Integer);
+procedure TMax.visit(vAttribute: ValidationAttribute);
 begin
-  FValue := value;
-  FErrorMessage := 'Valor máximo inválido.';
+  FValue := Max(vAttribute).Value;
+  FValueDouble := Max(vAttribute).ValueDouble;
 end;
 
-constructor Max.Create(value: Integer; errorMessage: String);
-begin
-  Self.Create(value);
-  FErrorMessage := errorMessage;
-end;
-
-constructor Max.Create(value: Double);
-begin
-  FValueDouble := value;
-  FErrorMessage := 'Valor não pode ser maior que o especificado';
-end;
-
-procedure Max.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TMax.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
   if rType.TypeKind = tkInteger then
@@ -447,21 +397,14 @@ begin
   end;
 end;
 
-{ Pattern }
+{ TPattern }
 
-constructor Pattern.Create(regex: String);
+procedure TPattern.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := 'Valor inválido.';
-  FValue := regex;
+  FValue := Pattern(vAttribute).Value;
 end;
 
-constructor Pattern.Create(regex, errorMessage: String);
-begin
-  Self.Create(regex);
-  FErrorMessage := errorMessage;
-end;
-
-procedure Pattern.doValidation(rType: TRttiType; rTypeName: String;
+procedure TPattern.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 var
   regex: TRegEx;
@@ -476,20 +419,14 @@ begin
   end;
 end;
 
-{ AssertTrue }
+{ TAssertTrue }
 
-constructor AssertTrue.Create;
+procedure TAssertTrue.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := 'Valor inválido. O valor precisa ser verdadeiro.';
+
 end;
 
-constructor AssertTrue.Create(errorMessage: String);
-begin
-  Self.Create;
-  FErrorMessage := errorMessage;
-end;
-
-procedure AssertTrue.doValidation(rType: TRttiType; rTypeName: String;
+procedure TAssertTrue.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   if not value.AsBoolean then
@@ -498,20 +435,14 @@ begin
   end;
 end;
 
-{ AssertFalse }
+{ TAssertFalse }
 
-constructor AssertFalse.Create;
+procedure TAssertFalse.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := 'Valor inválido. O valor precisa ser falso.';
+
 end;
 
-constructor AssertFalse.Create(errorMessage: String);
-begin
-  Self.Create;
-  FErrorMessage := errorMessage;
-end;
-
-procedure AssertFalse.doValidation(rType: TRttiType; rTypeName: String;
+procedure TAssertFalse.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   if value.AsBoolean then
@@ -556,38 +487,15 @@ begin
   Result := FValid;
 end;
 
-{ Size }
+{ TSize }
 
-constructor Size.Create;
+procedure TSize.visit(vAttribute: ValidationAttribute);
 begin
-  raise Exception.Create('Você deve especificar os valores min ou max.');
+  FMin := Size(vAttribute).Min;
+  FMax := Size(vAttribute).Max;
 end;
 
-constructor Size.Create(min: Integer);
-begin
-  FErrorMessage := 'Tamanho inválido.';
-  FMin := min;
-end;
-
-constructor Size.Create(min: Integer; errorMessage: String);
-begin
-  Self.Create(min);
-  FErrorMessage := errorMessage;
-end;
-
-constructor Size.Create(min: Integer; max: Integer);
-begin
-  Self.Create(min);
-  FMax := max;
-end;
-
-constructor Size.Create(min: Integer; max: Integer; errorMessage: String);
-begin
-  Self.Create(min, max);
-  FErrorMessage := errorMessage;
-end;
-
-procedure Size.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TSize.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 var
   fieldLength: Integer;
@@ -607,15 +515,14 @@ begin
   end;
 end;
 
-{ Future }
+{ TFuture }
 
-constructor Future.Create(errorMessage: String);
+procedure TFuture.visit(vAttribute: ValidationAttribute);
 begin
-  Self.Create;
-  FErrorMessage := errorMessage;
+
 end;
 
-procedure Future.doValidation(rType: TRttiType; rTypeName: String;
+procedure TFuture.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
@@ -625,15 +532,14 @@ begin
   end;
 end;
 
-{ Past }
+{ TPast }
 
-constructor Past.Create(errorMessage: String);
+procedure TPast.visit(vAttribute: ValidationAttribute);
 begin
-  Self.Create;
-  FErrorMessage := errorMessage;
+
 end;
 
-procedure Past.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TPast.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
   if (rTypeName = 'TDate') or (rTypeName = 'TDateTime') then
@@ -643,19 +549,14 @@ begin
   end;
 end;
 
-{ NotNull }
+{ TNotNull }
 
-constructor NotNull.Create(errorMessage: String);
+procedure TNotNull.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := errorMessage;
+
 end;
 
-constructor NotNull.Create;
-begin
-  FErrorMessage := 'Objeto não pode ser nulo.';
-end;
-
-procedure NotNull.doValidation(rType: TRttiType; rTypeName: String;
+procedure TNotNull.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   if rType.TypeKind = tkClass then
@@ -667,19 +568,14 @@ begin
   end;
 end;
 
-{ Null }
+{ TNull }
 
-constructor Null.Create(errorMessage: String);
+procedure TNull.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := errorMessage;
+
 end;
 
-constructor Null.Create;
-begin
-  FErrorMessage := 'Objeto deve ser nulo.';
-end;
-
-procedure Null.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TNull.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
   if rType.TypeKind = tkClass then
@@ -691,9 +587,9 @@ begin
   end;
 end;
 
-{ Valid }
+{ TValid }
 
-procedure Valid.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
+procedure TValid.doValidation(rType: TRttiType; rTypeName: String; value: TValue;
   validator: IValidator);
 begin
   FValid := True;
@@ -706,14 +602,21 @@ begin
   end;
 end;
 
-{ NotBlank }
+{ TValid }
 
-constructor NotBlank.Create;
+procedure TValid.visit(vAttribute: ValidationAttribute);
 begin
-  FErrorMessage := 'Não pode estar em branco.';
+
 end;
 
-procedure NotBlank.doValidation(rType: TRttiType; rTypeName: String;
+{ TNotBlank }
+
+procedure TNotBlank.visit(vAttribute: ValidationAttribute);
+begin
+
+end;
+
+procedure TNotBlank.doValidation(rType: TRttiType; rTypeName: String;
   value: TValue; validator: IValidator);
 begin
   if rType.TypeKind in [tkString, tkWString, tkUString] then
@@ -722,6 +625,26 @@ begin
     begin
       FValid := False;
     end;
+  end;
+end;
+
+{ TValidEmail }
+
+procedure TValidEmail.visit(vAttribute: ValidationAttribute);
+begin
+
+end;
+
+procedure TValidEmail.doValidation(rType: TRttiType; rTypeName: String;
+  value: TValue; validator: IValidator);
+var
+  regex: TRegEx;
+begin
+  if rType.TypeKind in [tkString, tkWString, tkUString] then
+  begin
+    regex := TRegEx.Create('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}$');
+    if not regex.IsMatch(value.AsString) then
+      FValid := false;
   end;
 end;
 
@@ -765,5 +688,49 @@ begin
 
   Result := FStringBuilder.ToString;
 end;
+
+class procedure TValidatorManager.registerValidator(validationAttribute: TClass;
+      validationExecutor: TValidationAttribute);
+begin
+  if TValidatorManager.FRegisteredValidators = nil then
+  begin
+    TValidatorManager.FRegisteredValidators := TObjectDictionary<String, TValidationAttribute>.Create([doOwnsValues]);
+  end;
+
+  if not TValidatorManager.FRegisteredValidators.ContainsKey(validationAttribute.ClassName) then
+  begin
+    TValidatorManager.FRegisteredValidators
+      .Add(validationAttribute.ClassName, validationExecutor);
+  end;
+end;
+
+class procedure TValidatorManager.unregisterValidators();
+begin
+  TValidatorManager.FRegisteredValidators.Free;
+end;
+
+class function TValidatorManager.getExecutor(validationAttribute: String): TValidationAttribute;
+begin
+  Result := FRegisteredValidators[validationAttribute];
+end;
+
+initialization
+  TValidatorManager.registerValidator(Required, TRequired.Create);
+  TValidatorManager.registerValidator(Min, TMin.Create);
+  TValidatorManager.registerValidator(Max, TMax.Create);
+  TValidatorManager.registerValidator(Pattern, TPattern.Create);
+  TValidatorManager.registerValidator(AssertTrue, TAssertTrue.Create);
+  TValidatorManager.registerValidator(AssertFalse, TAssertFalse.Create);
+  TValidatorManager.registerValidator(Size, TSize.Create);
+  TValidatorManager.registerValidator(Future, TFuture.Create);
+  TValidatorManager.registerValidator(Past, TPast.Create);
+  TValidatorManager.registerValidator(NotNull, TNotNull.Create);
+  TValidatorManager.registerValidator(Null, TNull.Create);
+  TValidatorManager.registerValidator(Valid, TValid.Create);
+  TValidatorManager.registerValidator(NotBlank, TNotBlank.Create);
+  TValidatorManager.registerValidator(ValidEmail, TValidEmail.Create);
+
+finalization
+  TValidatorManager.unregisterValidators();
 
 end.
