@@ -3,11 +3,16 @@ program PrjValidation;
 uses
   {$IFDEF DEBUG}
   FastMM4,
+  madExcept,
+  madLinkDisAsm,
+  madListHardware,
+  madListProcesses,
+  madListModules,
   {$ENDIF }
   Vcl.Forms,
   uFrmPrincipal in 'uFrmPrincipal.pas' {Form1},
   uModel in 'uModel.pas',
-  uValidationFramework in 'uValidationFramework.pas',
+  uValidation.Framework.Engine in 'uValidation.Framework.Engine.pas',
   uValidation.Framework.Attributes in 'uValidation.Framework.Attributes.pas';
 
 {$R *.res}

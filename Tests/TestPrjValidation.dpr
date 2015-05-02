@@ -13,7 +13,7 @@ uses
   DUnitX.Loggers.Xml.NUnit,
   DUnitX.TestFramework,
   uTestAttributes in 'uTestAttributes.pas',
-  uValidationFramework in '..\uValidationFramework.pas';
+  uValidation.Framework.Engine in '..\uValidation.Framework.Engine.pas';
 
 var
   runner : ITestRunner;

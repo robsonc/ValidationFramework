@@ -20,7 +20,7 @@ type
     [Valid]
     property Cliente: TCliente read FCliente write SetCliente;
     property DDD: String read FDDD write SetDDD;
-    [Required('Número do Telefone é obrigatório.')]
+    [NotEmpty('Número do Telefone é obrigatório.')]
     property Numero: String read FNumero write SetNumero;
   end;
 
@@ -45,7 +45,7 @@ type
   public
     //[Min(10.00)]
     property Valor: Double read FValor write SetValor;
-    //[Required('Este campo é obrigatório e não pode estar vazio.')]
+    [NotEmpty('Este campo é obrigatório e não pode estar vazio.')]
     //[Pattern('^Robson$', 'Nome inválido. O nome do indivíduo deve ser "Robson".')]
     [Size(6, 'O nome de usuário deve ter no mínino 6 caracteres.')]
     //[Size]
@@ -61,7 +61,7 @@ type
     property isCasado: Boolean read FisCasado write SetisCasado;
     //[Past('Data precisa ser no passado.')]
     property dataAtual: TDate read FdataAtual write SetdataAtual;
-    //[ValidEmail('E-mail inválido.')]
+    [ValidEmail('E-mail inválido.')]
     property Email: String read FEmail write SetEmail;
     [NotNull('Telefone não pode ser nulo.')]
     [Valid]

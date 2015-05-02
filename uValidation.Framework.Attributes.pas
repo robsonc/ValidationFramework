@@ -13,12 +13,6 @@ type
     property ErrorMessage: String read FErrorMessage write SetErrorMessage;
   end;
 
-  Required = class(ValidationAttribute)
-  public
-    constructor Create; overload;
-    constructor Create(errorMessage: String); overload;
-  end;
-
   Min = class(ValidationAttribute)
   private
     FValueDouble: Double;
@@ -123,19 +117,19 @@ type
     constructor Create(errorMessage: String); overload;
   end;
 
+  NotEmpty = class(ValidationAttribute)
+  public
+    constructor Create; overload;
+    constructor Create(errorMessage: String); overload;
+  end;
+
 implementation
 
-{ Required }
+{ ValidationAttribute }
 
-constructor Required.Create;
+procedure ValidationAttribute.SetErrorMessage(const Value: String);
 begin
-  FErrorMessage := 'Campo requerido.';
-end;
-
-constructor Required.Create(errorMessage: String);
-begin
-  Self.Create;
-  FErrorMessage := errorMessage;
+  FErrorMessage := Value;
 end;
 
 { Min }
@@ -343,11 +337,16 @@ begin
   FErrorMessage := errorMessage;
 end;
 
-{ ValidationAttribute }
+{ NotEmpty }
 
-procedure ValidationAttribute.SetErrorMessage(const Value: String);
+constructor NotEmpty.Create;
 begin
-  FErrorMessage := Value;
+  FErrorMessage := 'Não pode ser vazio.';
+end;
+
+constructor NotEmpty.Create(errorMessage: String);
+begin
+  FErrorMessage := errorMessage;
 end;
 
 end.
