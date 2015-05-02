@@ -5,9 +5,7 @@ interface
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
   Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, uModel,
-  uValidation.Framework.Engine, Vcl.Bind.GenData, System.Rtti, System.Bindings.Outputs,
-  Vcl.Bind.Editors, Data.Bind.EngExt, Vcl.Bind.DBEngExt, Data.Bind.Components,
-  Data.Bind.ObjectScope, RegularExpressions, System.TypInfo, System.Generics.Collections;
+  uValidation.Framework.Engine, System.Generics.Collections;
 
 type
   TForm1 = class(TForm)
@@ -53,6 +51,7 @@ var
   cliente: TCliente;
   validator: IValidator;
   telefone: TTelefone;
+  valid: Boolean;
 begin
   initControls();
 

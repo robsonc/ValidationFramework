@@ -2,7 +2,7 @@ unit uTestAttributes;
 
 interface
 uses
-  DUnitX.TestFramework, uValidationFramework;
+  DUnitX.TestFramework, uValidation.Framework.Engine, uValidation.Framework.Attributes;
 
 type
   TNotBlankClass = class
