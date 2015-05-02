@@ -2,7 +2,7 @@ unit uModel;
 
 interface
 
-uses uValidation.Framework.Attributes, System.Rtti, RegularExpressions, System.TypInfo;
+uses uValidation.Framework.Attributes;
 
 type
   TCliente = class;
